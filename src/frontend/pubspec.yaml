@@ -1,5 +1,5 @@
-name: frontend
-description: "A new Flutter project."
+name: onlyshrooms
+description: OnlyShrooms — grzybobrania management PWA
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -9,6 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  dio: ^5.8.0+1
+  flutter_riverpod: ^2.6.1
+  go_router: ^15.1.2
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
