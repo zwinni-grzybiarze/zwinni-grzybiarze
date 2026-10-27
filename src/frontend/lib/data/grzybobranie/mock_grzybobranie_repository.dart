@@ -160,12 +160,6 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
     return item;
   }
 
-  @override
-  Future<void> delete(String id) async {
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    _items.removeWhere((g) => g.id == id);
-  }
-
   Grzybobranie _require(String id) {
     return _items.firstWhere(
       (g) => g.id == id,

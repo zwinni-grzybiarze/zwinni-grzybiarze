@@ -74,13 +74,9 @@ class GrzybobraniaController extends ChangeNotifier {
 
   Future<Grzybobranie> save(Grzybobranie item, {required bool isNew}) async {
     final saved = isNew ? await _repo.create(item) : await _repo.update(item);
+    selected = saved;
     await loadList();
     return saved;
-  }
-
-  Future<void> remove(String id) async {
-    await _repo.delete(id);
-    await loadList();
   }
 
   Future<void> saveZadanie(
