@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+      </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OS.Services\OS.Services.csproj" />
+    <ProjectReference Include="..\OS.Interfaces\OS.Interfaces.csproj" />
+    <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
+  </ItemGroup>
+
+</Project>
