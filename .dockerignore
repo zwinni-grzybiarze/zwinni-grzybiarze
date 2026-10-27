@@ -28,3 +28,11 @@ README.md
 !.git/config
 !.git/packed-refs
 !.git/refs/heads/**
+**/build
+**/.dart_tool
+**/.flutter-plugins*
+src/frontend/android
+src/frontend/windows
+src/frontend/linux
+doc
+.github

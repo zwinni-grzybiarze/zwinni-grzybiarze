@@ -58,3 +58,6 @@ nunit-*.xml
 
 # Visual Studio cache/options
 .vs/
+
+# Local Docker build outputs
+artifacts/
