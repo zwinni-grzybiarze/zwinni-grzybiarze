@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\OS.Interfaces\OS.Interfaces.csproj" />
+    <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
+  </ItemGroup>
+
+</Project>

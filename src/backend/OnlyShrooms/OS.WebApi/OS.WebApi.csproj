@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <UserSecretsId>3ce031c0-51b8-4719-ba1c-f3976b3791ae</UserSecretsId>
+    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OS.WebApiDto\OS.WebApiDto.csproj" />
+    <ProjectReference Include="..\OS.Services\OS.Services.csproj" />
+    <ProjectReference Include="..\OS.Interfaces\OS.Interfaces.csproj" />
+    <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
+  </ItemGroup>
+
+</Project>

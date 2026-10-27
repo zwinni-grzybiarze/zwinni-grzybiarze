@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Business/">
+    <Project Path="OS.Interfaces/OS.Interfaces.csproj" />
+    <Project Path="OS.Model/OS.Model.csproj" />
+    <Project Path="OS.Services/OS.Services.csproj" />
+  </Folder>
+  <Folder Name="/Data/">
+    <Project Path="OS.Entities/OS.Entities.csproj" />
+    <Project Path="OS.Repository/OS.Repository.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="OS.Services.Tests/OS.Services.Tests.csproj" />
+    <Project Path="OS.WebApi.IntegrationTests/OS.WebApi.IntegrationTests.csproj" />
+  </Folder>
+  <Project Path="OS.WebApi/OS.WebApi.csproj" />
+  <Project Path="OS.WebApiDto/OS.WebApiDto.csproj" />
+</Solution>
