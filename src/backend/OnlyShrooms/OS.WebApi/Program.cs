@@ -9,7 +9,9 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddOsServices();
-builder.Services.AddOsRepository();
+builder.Services.AddOsRepository(
+    builder.Configuration.GetConnectionString("Default")
+    ?? throw new InvalidOperationException("Connection string 'Default' is not configured."));
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -18,6 +20,8 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 
 var app = builder.Build();
+
+await app.Services.MigrateOsDatabaseAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

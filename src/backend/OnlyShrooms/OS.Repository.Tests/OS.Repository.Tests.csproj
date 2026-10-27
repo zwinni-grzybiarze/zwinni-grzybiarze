@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OS.Repository\OS.Repository.csproj" />
+    <ProjectReference Include="..\OS.Interfaces\OS.Interfaces.csproj" />
+    <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
+  </ItemGroup>
+
+</Project>

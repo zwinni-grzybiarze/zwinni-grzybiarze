@@ -61,3 +61,9 @@ nunit-*.xml
 
 # Local Docker build outputs
 artifacts/
+
+# SQLite databases (local data)
+*.db
+*.db-shm
+*.db-wal
+**/App_Data/

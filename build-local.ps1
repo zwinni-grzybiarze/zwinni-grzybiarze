@@ -12,7 +12,10 @@ $artifacts = Join-Path $root 'artifacts'
 
 function Invoke-Step($description, [scriptblock]$action) {
     Write-Host "==> $description" -ForegroundColor Cyan
-    & $action
+    # Native tools write progress to stderr; judge success by exit code only.
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & $action } finally { $ErrorActionPreference = $previous }
     if ($LASTEXITCODE -ne 0) { throw "$description failed (exit code $LASTEXITCODE)" }
 }
 
