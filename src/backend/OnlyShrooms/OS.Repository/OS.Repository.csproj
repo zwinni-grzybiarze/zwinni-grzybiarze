@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\OS.Interfaces\OS.Interfaces.csproj" />
     <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
     <ProjectReference Include="..\OS.Entities\OS.Entities.csproj" />
