@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <UserSecretsId>3ce031c0-51b8-4719-ba1c-f3976b3791ae</UserSecretsId>
-    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..\..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>

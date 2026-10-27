@@ -1,0 +1,13 @@
+# Local image build: copies prebuilt outputs, so it never reaches pub.dev or nuget.org.
+# Use build-local.ps1 (repo root), which produces ./artifacts/api and ./artifacts/web first.
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+USER root
+RUN mkdir -p /data && chown -R $APP_UID:$APP_UID /data
+USER $APP_UID
+WORKDIR /app
+EXPOSE 8080
+COPY artifacts/api/ ./
+COPY artifacts/web/ ./wwwroot/
+VOLUME ["/data"]
+ENTRYPOINT ["dotnet", "OS.WebApi.dll"]

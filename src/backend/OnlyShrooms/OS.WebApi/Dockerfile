@@ -1,32 +1,38 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# Build context is the repository root (see DockerfileContext in OS.WebApi.csproj).
+# docker build -f src/backend/OnlyShrooms/OS.WebApi/Dockerfile -t onlyshrooms .
 
-# Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
-# For more information, please see https://aka.ms/containercompat
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-nanoserver-ltsc2022 AS base
+# Runtime base image (also used by Visual Studio fast mode)
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+USER root
+RUN mkdir -p /data && chown -R $APP_UID:$APP_UID /data
+USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
+# Flutter web build
+FROM ghcr.io/cirruslabs/flutter:stable AS frontend
+WORKDIR /src/frontend
+COPY src/frontend/pubspec.yaml src/frontend/pubspec.lock ./
+RUN flutter pub get
+COPY src/frontend/ ./
+RUN flutter build web --release
 
-# This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:10.0-nanoserver-ltsc2022 AS build
+# .NET build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["OS.WebApi/OS.WebApi.csproj", "OS.WebApi/"]
-RUN dotnet restore "./OS.WebApi/OS.WebApi.csproj"
-COPY . .
-WORKDIR "/src/OS.WebApi"
-RUN dotnet build "./OS.WebApi.csproj" -c %BUILD_CONFIGURATION% -o /app/build
+WORKDIR /src/backend/OnlyShrooms
+COPY src/backend/OnlyShrooms/ ./
+RUN dotnet restore "OS.WebApi/OS.WebApi.csproj"
+RUN dotnet build "OS.WebApi/OS.WebApi.csproj" -c $BUILD_CONFIGURATION --no-restore
 
-# This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./OS.WebApi.csproj" -c %BUILD_CONFIGURATION% -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "OS.WebApi/OS.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish --no-build /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Final image: API + Flutter web in wwwroot
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=frontend /src/frontend/build/web ./wwwroot
+VOLUME ["/data"]
 ENTRYPOINT ["dotnet", "OS.WebApi.dll"]
