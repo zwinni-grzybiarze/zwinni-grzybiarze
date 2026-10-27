@@ -36,3 +36,8 @@ src/frontend/windows
 src/frontend/linux
 doc
 .github
+
+*.db
+*.db-shm
+*.db-wal
+**/App_Data

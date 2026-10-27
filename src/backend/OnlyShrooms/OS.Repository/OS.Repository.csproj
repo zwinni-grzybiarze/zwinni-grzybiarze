@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Riok.Mapperly" PrivateAssets="all" />
   </ItemGroup>
@@ -9,6 +10,10 @@
     <ProjectReference Include="..\OS.Interfaces\OS.Interfaces.csproj" />
     <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
     <ProjectReference Include="..\OS.Entities\OS.Entities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OS.Repository.Tests" />
   </ItemGroup>
 
 </Project>

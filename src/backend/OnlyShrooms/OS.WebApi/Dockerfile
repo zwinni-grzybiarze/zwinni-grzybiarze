@@ -8,9 +8,10 @@ RUN mkdir -p /data && chown -R $APP_UID:$APP_UID /data
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
+ENV ConnectionStrings__Default="Data Source=/data/onlyshrooms.db"
 
 # Flutter web build
-FROM ghcr.io/cirruslabs/flutter:stable AS frontend
+FROM ghcr.io
 WORKDIR /src/frontend
 COPY src/frontend/pubspec.yaml src/frontend/pubspec.lock ./
 RUN flutter pub get

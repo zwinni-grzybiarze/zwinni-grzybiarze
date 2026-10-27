@@ -9,6 +9,7 @@
     <Project Path="OS.Repository/OS.Repository.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="OS.Repository.Tests/OS.Repository.Tests.csproj" />
     <Project Path="OS.Services.Tests/OS.Services.Tests.csproj" />
     <Project Path="OS.WebApi.IntegrationTests/OS.WebApi.IntegrationTests.csproj" />
   </Folder>
