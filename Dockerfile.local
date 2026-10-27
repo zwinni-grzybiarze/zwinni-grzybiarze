@@ -1,5 +1,5 @@
 # Local image build: copies prebuilt outputs, so it never reaches pub.dev or nuget.org.
-# Use build-local.ps1 (repo root), which produces ./artifacts/api and ./artifacts/web first.
+# Use build-local.ps1 / build-local.sh (repo root), which produce ./artifacts/api and ./artifacts/web first.
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 USER root
