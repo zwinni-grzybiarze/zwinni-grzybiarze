@@ -15,6 +15,7 @@
     <ProjectReference Include="..\OS.Services\OS.Services.csproj" />
     <ProjectReference Include="..\OS.Interfaces\OS.Interfaces.csproj" />
     <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
+    <ProjectReference Include="..\OS.Repository\OS.Repository.csproj" />
   </ItemGroup>
 
 </Project>
