@@ -16,6 +16,12 @@
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7198;http://localhost:5032"
     },
+    "Local container (build-local)": {
+      "commandName": "Executable",
+      "executablePath": "powershell.exe",
+      "commandLineArgs": "-NoProfile -ExecutionPolicy Bypass -File run-local.ps1",
+      "workingDirectory": "$(SolutionDir)..\\..\\.."
+    },
     "Container (Dockerfile)": {
       "commandName": "Docker",
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
