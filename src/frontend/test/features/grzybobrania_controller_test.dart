@@ -32,7 +32,7 @@ void main() {
     expect(controller.detailLoading, isFalse);
   });
 
-  test('save create then remove', () async {
+  test('save create', () async {
     final created = await controller.save(
       Grzybobranie(
         id: 'x',
@@ -51,13 +51,6 @@ void main() {
     expect(
       controller.page!.content.any((g) => g.id == created.id),
       isTrue,
-    );
-
-    await controller.remove(created.id);
-    await controller.loadList(nazwa: 'Controller create', page: 0);
-    expect(
-      controller.page!.content.any((g) => g.id == created.id),
-      isFalse,
     );
   });
 }

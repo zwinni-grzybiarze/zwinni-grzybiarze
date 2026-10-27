@@ -63,36 +63,6 @@ class _GrzybobranieDetailPageState
               onPressed: () => context.go('/grzybobrania/${g.id}/edit'),
               icon: const Icon(Icons.edit),
             ),
-          if (g != null)
-            IconButton(
-              tooltip: 'Usuń',
-              onPressed: () async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Usunąć grzybobranie?'),
-                    content: Text(g.nazwa),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Anuluj'),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Usuń'),
-                      ),
-                    ],
-                  ),
-                );
-                if (ok == true && context.mounted) {
-                  await ref
-                      .read(grzybobraniaControllerProvider.notifier)
-                      .remove(g.id);
-                  if (context.mounted) context.go('/');
-                }
-              },
-              icon: const Icon(Icons.delete_outline),
-            ),
         ],
         bottom: TabBar(
           controller: _tabs,

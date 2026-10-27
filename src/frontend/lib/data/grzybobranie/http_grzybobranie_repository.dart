@@ -18,19 +18,15 @@ class HttpGrzybobranieRepository implements GrzybobranieRepository {
     int size = 10,
     String? sort,
   }) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/api/grzybobrania',
-      queryParameters: {
-        if (nazwa != null && nazwa.isNotEmpty) 'nazwa': nazwa,
-        'page': page,
-        'size': size,
-        'sort': ?sort,
-      },
-    );
-    return PageResponse.fromJson(
-      response.data ?? const {},
-      Grzybobranie.fromJson,
-    );
+    final response = await _dio.get<List<dynamic>>('/api/grzybobrania');
+    var items = (response.data ?? const <dynamic>[])
+        .map((e) => Grzybobranie.fromJson(e as Map<String, dynamic>))
+        .toList();
+    if (nazwa != null && nazwa.trim().isNotEmpty) {
+      final q = nazwa.trim().toLowerCase();
+      items = items.where((g) => g.nazwa.toLowerCase().contains(q)).toList();
+    }
+    return PageResponse.fromList(items, page: page, size: size);
   }
 
   @override
@@ -69,11 +65,6 @@ class HttpGrzybobranieRepository implements GrzybobranieRepository {
   Future<Grzybobranie> update(Grzybobranie item) async {
     await _dio.put('/api/grzybobrania/${item.id}', data: item.toJson());
     return (await getById(item.id)) ?? item;
-  }
-
-  @override
-  Future<void> delete(String id) async {
-    await _dio.delete('/api/grzybobrania/$id');
   }
 
   @override
