@@ -36,7 +36,7 @@ internal sealed class ZadanieRepository(OsDbContext context) : IZadanieRepositor
 
     public async Task<Zadanie?> UpdateAsync(Zadanie zadanie, CancellationToken cancellationToken = default)
     {
-        var entity = await context.Zadanie.SingleOrDefaultAsync(e => e.Id == zadanie.Id, cancellationToken);
+        var entity = await context.Zadania.SingleOrDefaultAsync(e => e.Id == zadanie.Id, cancellationToken);
         if (entity is null)
         {
             return null;
