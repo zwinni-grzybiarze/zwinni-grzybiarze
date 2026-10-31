@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddOsRepository(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<OsDbContext>(options => options.UseSqlite(connectionString));
-        services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
+        services.AddScoped<IGrzybobranieRepository, GrzybobranieRepository>();
 
         return services;
     }
