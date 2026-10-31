@@ -11,7 +11,7 @@ using OS.Repository;
 namespace OS.Repository.Migrations
 {
     [DbContext(typeof(OsDbContext))]
-    [Migration("20261027175624_InitialCreate")]
+    [Migration("20261027204526_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,25 +20,39 @@ namespace OS.Repository.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
-            modelBuilder.Entity("OS.Entities.WeatherForecastEntity", b =>
+            modelBuilder.Entity("OS.Entities.GrzybobranieEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("DataDo")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Summary")
+                    b.Property<DateTime>("DataOd")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Lokalizacja")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nazwa")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("TemperatureC")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Opis")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("WeatherForecasts", (string)null);
+                    b.ToTable("Grzybobrania", (string)null);
                 });
 #pragma warning restore 612, 618
         }

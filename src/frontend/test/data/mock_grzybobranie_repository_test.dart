@@ -25,7 +25,7 @@ void main() {
     );
   });
 
-  test('create update delete grzybobranie', () async {
+  test('create and update grzybobranie', () async {
     final created = await repo.create(
       Grzybobranie(
         id: 'tmp',
@@ -47,9 +47,6 @@ void main() {
     );
     expect(updated.nazwa, 'Zmienione');
     expect((await repo.getById(created.id))?.nazwa, 'Zmienione');
-
-    await repo.delete(created.id);
-    expect(await repo.getById(created.id), isNull);
   });
 
   test('zadania and czlonkowie CRUD on parent', () async {

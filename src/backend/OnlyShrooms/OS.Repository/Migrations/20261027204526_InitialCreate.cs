@@ -12,18 +12,21 @@ namespace OS.Repository.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "WeatherForecasts",
+                name: "Grzybobrania",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Date = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TemperatureC = table.Column<int>(type: "INTEGER", nullable: false),
-                    Summary = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true)
+                    Nazwa = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Opis = table.Column<string>(type: "TEXT", nullable: true),
+                    Lokalizacja = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    DataOd = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DataDo = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_WeatherForecasts", x => x.Id);
+                    table.PrimaryKey("PK_Grzybobrania", x => x.Id);
                 });
         }
 
@@ -31,7 +34,7 @@ namespace OS.Repository.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "WeatherForecasts");
+                name: "Grzybobrania");
         }
     }
 }

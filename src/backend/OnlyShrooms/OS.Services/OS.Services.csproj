@@ -9,4 +9,8 @@
     <ProjectReference Include="..\OS.Model\OS.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="OS.Services.Tests" />
+  </ItemGroup>
+
 </Project>

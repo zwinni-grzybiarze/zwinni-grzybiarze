@@ -5,7 +5,7 @@ namespace OS.Repository;
 
 internal sealed class OsDbContext(DbContextOptions<OsDbContext> options) : DbContext(options)
 {
-    public DbSet<WeatherForecastEntity> WeatherForecasts => Set<WeatherForecastEntity>();
+    public DbSet<GrzybobranieEntity> Grzybobrania => Set<GrzybobranieEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
