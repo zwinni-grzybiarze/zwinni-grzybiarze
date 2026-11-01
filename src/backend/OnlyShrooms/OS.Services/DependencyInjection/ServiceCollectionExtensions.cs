@@ -8,6 +8,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddOsServices(this IServiceCollection services)
     {
         services.AddScoped<IGrzybobranieService, GrzybobranieService>();
+        services.AddScoped<IGrzybiarzService, GrzybiarzService>();
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IZadanieService, ZadanieService>();
 
         return services;
