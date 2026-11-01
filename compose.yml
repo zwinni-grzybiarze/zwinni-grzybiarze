@@ -8,6 +8,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      Authentication__Keycloak__Issuer: "http://localhost:8081/realms/onlyshrooms"
+      Authentication__Keycloak__MetadataAddress: "http://keycloak:8080/realms/onlyshrooms/.well-known/openid-configuration"
+      Authentication__Keycloak__Audience: "onlyshrooms-api"
     ports:
       - "8080:8080"
     volumes:
@@ -20,6 +24,8 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: "http://localhost:8081"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     ports:
       - "8081:8080"
     volumes:

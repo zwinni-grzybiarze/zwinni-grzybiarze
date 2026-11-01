@@ -1,12 +1,13 @@
 import 'package:oidc/oidc.dart';
 import 'package:onlyshrooms/data/auth/auth_repository.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
+import 'package:dio/dio.dart';
 
 class KeycloakAuthRepository implements AuthRepository {
-  KeycloakAuthRepository(this._manager);
+  KeycloakAuthRepository(this._manager, this._api);
 
   final OidcUserManager _manager;
-
+  final Dio _api;  
   @override
   Grzybiarz? get currentUser => _toGrzybiarz(_manager.currentUser);
 
@@ -17,8 +18,39 @@ class KeycloakAuthRepository implements AuthRepository {
   Stream<Grzybiarz?> get authStateChanges =>
       _manager.userChangesAfterInit().map(_toGrzybiarz);
 
+  Future<Grzybiarz> _provisionCurrentUser() async {
+    final accessToken = await _manager.getAccessToken();
+    if (accessToken == null) {
+      throw StateError('Keycloak did not provide an access token.');
+    }
+
+    final response = await _api.post<Map<String, dynamic>>(
+      '/api/auth/me',
+      options: Options(
+        headers: {'Authorization': 'Bearer $accessToken'},
+      ),
+    );
+
+    final data = response.data;
+    if (data == null || data['keycloakId'] is! String) {
+      throw StateError('The API returned an invalid user response.');
+    }
+
+    return Grzybiarz(
+      id: data['keycloakId'] as String,
+      imie: data['imie'] as String? ?? '',
+      nazwisko: data['nazwisko'] as String? ?? '',
+      email: data['email'] as String?,
+    );
+  }
+
   @override
-  Future<void> restoreSession() => _manager.init();
+  Future<void> restoreSession() async {
+    await _manager.init();
+    if(_manager.currentUser != null) {
+      await _provisionCurrentUser();
+    }
+  }
 
   @override
   Future<Grzybiarz> signInWithGoogle({bool register = false}) async {
@@ -31,7 +63,7 @@ class KeycloakAuthRepository implements AuthRepository {
     if (grzybiarz == null) {
       throw StateError('Google sign-in completed without a user.');
     }
-    return grzybiarz;
+    return _provisionCurrentUser();
   }
 
   @override

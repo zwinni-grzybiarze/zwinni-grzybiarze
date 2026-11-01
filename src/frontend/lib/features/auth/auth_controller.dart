@@ -5,11 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:onlyshrooms/data/auth/auth_repository.dart';
 import 'package:onlyshrooms/data/auth/keycloak_auth_repository.dart';
 import 'package:onlyshrooms/data/auth/keycloak_manager.dart';
-
+import 'package:onlyshrooms/core/api_client.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return KeycloakAuthRepository(keycloakManager);
+  return KeycloakAuthRepository(keycloakManager, createApiClient());
 });
 
 final authControllerProvider =
