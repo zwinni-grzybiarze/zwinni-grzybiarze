@@ -1,0 +1,14 @@
+# LAN demo TLS for Android PWA installability.
+# Uses a repo-local self-signed cert (deploy/tls/) so HTTPS works on raw LAN IPs.
+# Phones show a warning once; tap Advanced → Proceed, then Install app.
+#
+# Open: https://<host-lan-ip>
+
+{
+	auto_https off
+}
+
+:443 {
+	tls /etc/caddy/tls/cert.pem /etc/caddy/tls/key.pem
+	reverse_proxy onlyshrooms:8080
+}
