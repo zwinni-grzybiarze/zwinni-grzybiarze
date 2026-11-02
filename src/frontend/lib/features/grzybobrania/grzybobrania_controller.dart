@@ -79,6 +79,14 @@ class GrzybobraniaController extends ChangeNotifier {
     return saved;
   }
 
+  Future<void> remove(String id) async {
+    await _repo.delete(id);
+    if (selected?.id == id) {
+      selected = null;
+    }
+    await loadList();
+  }
+
   Future<void> saveZadanie(
     String grzybobranieId,
     Zadanie zadanie, {

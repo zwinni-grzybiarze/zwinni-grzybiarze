@@ -11,4 +11,6 @@ public interface IGrzybobranieRepository
     Task<Grzybobranie> AddAsync(Grzybobranie grzybobranie, CancellationToken cancellationToken = default);
 
     Task<Grzybobranie?> UpdateAsync(Grzybobranie grzybobranie, CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

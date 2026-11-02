@@ -68,6 +68,11 @@ class HttpGrzybobranieRepository implements GrzybobranieRepository {
   }
 
   @override
+  Future<void> delete(String id) async {
+    await _dio.delete('/api/grzybobrania/$id');
+  }
+
+  @override
   Future<List<Zadanie>> listZadania(String grzybobranieId) async {
     final response = await _dio.get<dynamic>(
       '/api/grzybobrania/$grzybobranieId/zadania',

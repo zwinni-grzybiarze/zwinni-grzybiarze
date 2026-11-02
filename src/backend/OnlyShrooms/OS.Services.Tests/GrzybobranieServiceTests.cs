@@ -130,4 +130,19 @@ public sealed class GrzybobranieServiceTests
 
         Assert.HasCount(2, await _service.GetAllAsync());
     }
+
+    [TestMethod]
+    public async Task DeleteAsync_RemovesExistingItem()
+    {
+        var created = await _service.CreateAsync(Valid());
+
+        Assert.IsTrue(await _service.DeleteAsync(created.Id));
+        Assert.IsNull(await _service.GetByIdAsync(created.Id));
+    }
+
+    [TestMethod]
+    public async Task DeleteAsync_UnknownId_ReturnsFalse()
+    {
+        Assert.IsFalse(await _service.DeleteAsync(404));
+    }
 }
