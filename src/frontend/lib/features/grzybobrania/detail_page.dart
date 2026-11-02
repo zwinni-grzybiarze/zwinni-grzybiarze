@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/app_theme.dart';
 import 'package:onlyshrooms/core/responsive.dart';
+import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 import 'package:onlyshrooms/features/grzybobrania/grzybobrania_controller.dart';
@@ -57,12 +58,18 @@ class _GrzybobranieDetailPageState
           onPressed: () => context.go('/'),
         ),
         actions: [
-          if (g != null)
+          if (g != null) ...[
             IconButton(
               tooltip: 'Edytuj',
               onPressed: () => context.go('/grzybobrania/${g.id}/edit'),
               icon: const Icon(Icons.edit),
             ),
+            IconButton(
+              tooltip: 'Usuń',
+              onPressed: () => _confirmDelete(g),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
         ],
         bottom: TabBar(
           controller: _tabs,
@@ -101,6 +108,38 @@ class _GrzybobranieDetailPageState
                   ],
                 ),
     );
+  }
+
+  Future<void> _confirmDelete(Grzybobranie g) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usuń grzybobranie'),
+        content: Text('Usunąć „${g.nazwa}”? Tej operacji nie można cofnąć.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Anuluj'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Usuń'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    try {
+      await ref.read(grzybobraniaControllerProvider.notifier).remove(g.id);
+      if (!mounted) return;
+      context.go('/');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Nie udało się usunąć: $e')),
+      );
+    }
   }
 }
 

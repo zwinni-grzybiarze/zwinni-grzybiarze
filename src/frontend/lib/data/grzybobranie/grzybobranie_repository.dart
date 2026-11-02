@@ -17,6 +17,8 @@ abstract class GrzybobranieRepository {
 
   Future<Grzybobranie> update(Grzybobranie item);
 
+  Future<void> delete(String id);
+
   Future<List<Zadanie>> listZadania(String grzybobranieId);
 
   Future<Zadanie> createZadanie(String grzybobranieId, Zadanie zadanie);

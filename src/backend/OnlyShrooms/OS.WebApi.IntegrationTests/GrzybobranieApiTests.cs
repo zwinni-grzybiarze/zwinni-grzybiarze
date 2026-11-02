@@ -176,13 +176,24 @@ public sealed class GrzybobranieApiTests
     }
 
     [TestMethod]
-    public async Task Delete_IsNotSupported()
+    public async Task Delete_RemovesItem()
     {
         var created = await CreateAsync();
         var id = created.GetProperty("grzybobranieId").GetInt32();
 
         var response = await _client.DeleteAsync($"/api/grzybobrania/{id}");
 
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+
+        var getResponse = await _client.GetAsync($"/api/grzybobrania/{id}");
+        Assert.AreEqual(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Delete_UnknownId_ReturnsNotFound()
+    {
+        var response = await _client.DeleteAsync("/api/grzybobrania/999999");
+
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 }
