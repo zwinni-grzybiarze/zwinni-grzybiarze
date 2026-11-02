@@ -60,6 +60,24 @@ flutter build web --dart-define=USE_MOCK_DATA=false --dart-define=API_BASE=
 
 - Output: `build/web`
 - `manifest.json` is set up for installable PWA (`display: standalone`)
+- Empty `API_BASE` → same-origin API calls (needed when the phone opens the LAN URL)
+
+### Install on Android (same Wi‑Fi)
+
+Android Chrome only installs PWAs over **HTTPS** (localhost is the only HTTP exception — that helps laptops, not phones).
+
+From the repo root:
+
+```bash
+./run-lan.sh
+```
+
+1. Find this machine’s LAN IP (`ip a` / `ipconfig`).
+2. On the phone open `https://<lan-ip>` (port **443**; Caddy uses an internal cert).
+3. Accept the certificate warning once (Chrome: Advanced → Proceed).
+4. Menu → **Install app** / **Add to Home screen**.
+
+`./run-local.sh` stays as plain `http://localhost:8080` for desktop testing. Compose does not bind host port 80 (often already used by nginx/apache).
 
 ## Project layout
 

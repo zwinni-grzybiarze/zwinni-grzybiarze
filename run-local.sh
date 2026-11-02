@@ -24,4 +24,6 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 docker rm -f "$Name" >/dev/null 2>&1 || true
 
 echo "==> Running http://localhost:8080 (Ctrl+C to quit)"
+echo "    Laptop Chrome can install PWA from localhost over HTTP."
+echo "    For Android on the same Wi‑Fi, use ./run-lan.sh (HTTPS via Caddy)."
 docker run --rm --name "$Name" -p 8080:8080 -v onlyshrooms-data:/data "$Tag"

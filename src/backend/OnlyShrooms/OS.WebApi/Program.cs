@@ -45,7 +45,26 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var path = ctx.File.Name;
+        // Keep the shell fresh so PWA clients pick up new service-worker / index after redeploy.
+        if (path.Equals("index.html", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("flutter_service_worker.js", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("manifest.json", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("flutter_bootstrap.js", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.Headers.CacheControl = "no-cache";
+        }
+
+        if (path.Equals("manifest.json", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.ContentType = "application/manifest+json";
+        }
+    },
+});
 
 app.UseAuthorization();
 

@@ -16,7 +16,10 @@ WORKDIR /src/frontend
 COPY src/frontend/pubspec.yaml src/frontend/pubspec.lock ./
 RUN flutter pub get
 COPY src/frontend/ ./
-RUN flutter build web --release
+# Empty API_BASE => same-origin requests (required for LAN phone / PWA installs).
+RUN flutter build web --release \
+    --dart-define=USE_MOCK_DATA=false \
+    --dart-define=API_BASE=
 
 # .NET build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
