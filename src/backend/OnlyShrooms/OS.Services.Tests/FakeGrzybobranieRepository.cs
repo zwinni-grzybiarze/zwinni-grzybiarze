@@ -38,16 +38,4 @@ internal sealed class FakeGrzybobranieRepository : IGrzybobranieRepository
         _items[index] = grzybobranie;
         return Task.FromResult<Grzybobranie?>(grzybobranie);
     }
-
-    public Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var index = _items.FindIndex(i => i.Id == id);
-        if (index < 0)
-        {
-            return Task.FromResult(false);
-        }
-
-        _items.RemoveAt(index);
-        return Task.FromResult(true);
-    }
 }

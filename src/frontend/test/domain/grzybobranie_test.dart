@@ -66,6 +66,20 @@ void main() {
       expect(g.opis, 'b');
       expect(g.status, GrzybobranieStatus.planowane);
     });
+
+    test('isArchived follows zarchiwizowane status', () {
+      final active = Grzybobranie(
+        id: '1',
+        nazwa: 'N',
+        fields: {'status': 'PLANOWANE'},
+      );
+      final archived = active.copyWithField(
+        'status',
+        GrzybobranieStatus.zarchiwizowane.apiValue,
+      );
+      expect(active.isArchived, isFalse);
+      expect(archived.isArchived, isTrue);
+    });
   });
 
   group('GrzybobranieStatus', () {
@@ -73,6 +87,10 @@ void main() {
       expect(
         GrzybobranieStatus.tryParse('ODROCZONE'),
         GrzybobranieStatus.odroczone,
+      );
+      expect(
+        GrzybobranieStatus.tryParse('ZARCHIWIZOWANE'),
+        GrzybobranieStatus.zarchiwizowane,
       );
       expect(GrzybobranieStatus.tryParse('nope'), isNull);
     });

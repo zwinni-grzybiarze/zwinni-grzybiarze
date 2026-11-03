@@ -11,6 +11,4 @@ public interface IGrzybobranieService
     Task<Grzybobranie> CreateAsync(Grzybobranie grzybobranie, CancellationToken cancellationToken = default);
 
     Task<Grzybobranie?> UpdateAsync(int id, Grzybobranie grzybobranie, CancellationToken cancellationToken = default);
-
-    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

@@ -44,6 +44,11 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
     final ctrl = ref.read(grzybobraniaControllerProvider.notifier);
     await ctrl.loadDetail(widget.id!);
     final g = ctrl.selected;
+    if (g != null && g.isArchived) {
+      // Archived items are view-only — bounce deep links back to detail.
+      if (mounted) context.go('/grzybobrania/${g.id}');
+      return;
+    }
     if (g != null) {
       _existingId = g.id;
       _nazwa.text = g.nazwa;
@@ -68,12 +73,30 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
 
   Future<void> _pickDate(TextEditingController target) async {
     final now = DateTime.now();
-    final initial = DateTime.tryParse(target.text) ?? now;
+    final rangeStart = DateTime(now.year - 2);
+    final rangeEnd = DateTime(now.year + 5);
+    final od = DateTime.tryParse(_dataOd.text);
+    final do_ = DateTime.tryParse(_dataDo.text);
+
+    // Prevent invalid ranges: Data do cannot be before Data od (and vice versa).
+    DateTime firstDate = rangeStart;
+    DateTime lastDate = rangeEnd;
+    if (identical(target, _dataDo) && od != null) {
+      firstDate = od;
+    }
+    if (identical(target, _dataOd) && do_ != null) {
+      lastDate = do_;
+    }
+
+    var initial = DateTime.tryParse(target.text) ?? now;
+    if (initial.isBefore(firstDate)) initial = firstDate;
+    if (initial.isAfter(lastDate)) initial = lastDate;
+
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
-      firstDate: DateTime(now.year - 2),
-      lastDate: DateTime(now.year + 5),
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
     if (picked != null) {
       target.text =
@@ -84,16 +107,6 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final od = DateTime.tryParse(_dataOd.text);
-    final do_ = DateTime.tryParse(_dataDo.text);
-    if (od != null && do_ != null && do_.isBefore(od)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Data zakończenia nie może być przed datą startu'),
-        ),
-      );
-      return;
-    }
 
     setState(() => _saving = true);
     final item = Grzybobranie(
@@ -177,7 +190,14 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
                           value: _status,
                           decoration:
                               const InputDecoration(labelText: 'Status'),
+                          // Archive only via Usuń; keep current value if already archived
+                          // so the dropdown stays valid and un-archive is possible.
                           items: GrzybobranieStatus.values
+                              .where(
+                                (s) =>
+                                    s != GrzybobranieStatus.zarchiwizowane ||
+                                    s == _status,
+                              )
                               .map(
                                 (s) => DropdownMenuItem(
                                   value: s,

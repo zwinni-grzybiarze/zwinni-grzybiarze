@@ -120,21 +120,6 @@ public sealed class GrzybobranieRepositoryTests
     }
 
     [TestMethod]
-    public async Task DeleteAsync_RemovesExistingItem()
-    {
-        var added = await _repository.AddAsync(Create());
-
-        Assert.IsTrue(await _repository.DeleteAsync(added.Id));
-        Assert.IsNull(await _repository.GetByIdAsync(added.Id));
-    }
-
-    [TestMethod]
-    public async Task DeleteAsync_UnknownId_ReturnsFalse()
-    {
-        Assert.IsFalse(await _repository.DeleteAsync(12345));
-    }
-
-    [TestMethod]
     public async Task Status_IsStoredAsReadableText()
     {
         var added = await _repository.AddAsync(Create(status: GrzybobranieStatus.Zakonczone));
