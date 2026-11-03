@@ -14,6 +14,8 @@ namespace OS.Repository.Migrations
                 name: "Grzybiarze",
                 columns: table => new
                 {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     KeycloakId = table.Column<string>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
                     Imie = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
@@ -21,8 +23,14 @@ namespace OS.Repository.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Grzybiarze", x => x.KeycloakId);
+                    table.PrimaryKey("PK_Grzybiarze", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Grzybiarze_KeycloakId",
+                table: "Grzybiarze",
+                column: "KeycloakId",
+                unique: true);
         }
 
         /// <inheritdoc />

@@ -19,8 +19,9 @@ namespace OS.Repository.Migrations
 
             modelBuilder.Entity("OS.Entities.GrzybiarzEntity", b =>
                 {
-                    b.Property<string>("KeycloakId")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
                         .HasMaxLength(200)
@@ -31,12 +32,19 @@ namespace OS.Repository.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("KeycloakId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Nazwisko")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.HasKey("KeycloakId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeycloakId")
+                        .IsUnique();
 
                     b.ToTable("Grzybiarze", (string)null);
                 });

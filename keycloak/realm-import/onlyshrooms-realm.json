@@ -1240,8 +1240,8 @@
       "providerId": "google",
       "enabled": true,
       "config": {
-        "clientSecret": "**********",
-        "clientId": "746750835413-s8e2b55ithibqpjaqpbl58oqh9a74kac.apps.googleusercontent.com",
+        "clientSecret": "${KC_GOOGLE_CLIENT_SECRET:change_me}",
+        "clientId": "${KC_GOOGLE_CLIENT_ID:change_me}",
         "issuer": "https://accounts.google.com",
         "jwtAuthorizationGrantMaxAllowedAssertionExpiration": "3600"
       },

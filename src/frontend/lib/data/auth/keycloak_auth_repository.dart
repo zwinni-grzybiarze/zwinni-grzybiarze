@@ -1,13 +1,14 @@
-import 'package:oidc/oidc.dart';
-import 'package:onlyshrooms/data/auth/auth_repository.dart';
-import 'package:onlyshrooms/domain/grzybiarz.dart';
 import 'package:dio/dio.dart';
+import 'package:onlyshrooms/data/auth/auth_repository.dart';
+import 'package:onlyshrooms/data/auth/keycloak_auth_manager.dart';
+import 'package:onlyshrooms/domain/grzybiarz.dart';
 
 class KeycloakAuthRepository implements AuthRepository {
   KeycloakAuthRepository(this._manager, this._api);
 
-  final OidcUserManager _manager;
-  final Dio _api;  
+  final KeycloakAuthManager _manager;
+  final Dio _api;
+
   @override
   Grzybiarz? get currentUser => _toGrzybiarz(_manager.currentUser);
 
@@ -16,19 +17,24 @@ class KeycloakAuthRepository implements AuthRepository {
 
   @override
   Stream<Grzybiarz?> get authStateChanges =>
-      _manager.userChangesAfterInit().map(_toGrzybiarz);
+      _manager.userChanges.map(_toGrzybiarz);
 
-  Future<Grzybiarz> _provisionCurrentUser() async {
+  Future<Grzybiarz> _provisionUser(KeycloakIdentity user) async {
     final accessToken = await _manager.getAccessToken();
     if (accessToken == null) {
       throw StateError('Keycloak did not provide an access token.');
     }
 
+    final claims = user.claims;
     final response = await _api.post<Map<String, dynamic>>(
       '/api/auth/me',
-      options: Options(
-        headers: {'Authorization': 'Bearer $accessToken'},
-      ),
+      data: {
+        'keycloakId': user.id,
+        'email': claims['email'],
+        'imie': claims['given_name'],
+        'nazwisko': claims['family_name'],
+      },
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
     );
 
     final data = response.data;
@@ -47,37 +53,33 @@ class KeycloakAuthRepository implements AuthRepository {
   @override
   Future<void> restoreSession() async {
     await _manager.init();
-    if(_manager.currentUser != null) {
-      await _provisionCurrentUser();
+    final user = _manager.currentUser;
+    if (user != null) {
+      await _provisionUser(user);
     }
   }
 
   @override
   Future<Grzybiarz> signInWithGoogle({bool register = false}) async {
-    final user = await _manager.loginAuthorizationCodeFlow(
-      originalUri: Uri.parse('/'),
-      extraParameters: const {'kc_idp_hint': 'google'},
-    );
-
-    final grzybiarz = _toGrzybiarz(user ?? _manager.currentUser);
-    if (grzybiarz == null) {
+    final user = await _manager.signInWithGoogle();
+    if (user == null) {
       throw StateError('Google sign-in completed without a user.');
     }
-    return _provisionCurrentUser();
+    return _provisionUser(user);
   }
 
   @override
   Future<void> signOut() => _manager.logout();
 
-  Grzybiarz? _toGrzybiarz(OidcUser? user) {
+  Grzybiarz? _toGrzybiarz(KeycloakIdentity? user) {
     if (user == null) return null;
 
-    final claims = user.aggregatedClaims;
+    final claims = user.claims;
     String stringClaim(String key) =>
         claims[key] is String ? claims[key] as String : '';
 
     return Grzybiarz(
-      id: user.uidRequired,
+      id: user.id,
       imie: stringClaim('given_name'),
       nazwisko: stringClaim('family_name'),
       email: claims['email'] is String ? claims['email'] as String : null,
