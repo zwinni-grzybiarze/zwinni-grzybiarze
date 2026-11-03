@@ -131,6 +131,16 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
                   ),
                 ],
               ),
+            const SizedBox(height: 8),
+            _StatusFilterChips(
+              selected: ctrl.selectedStatuses,
+              compact: compact,
+              onToggle: (status) {
+                ref
+                    .read(grzybobraniaControllerProvider.notifier)
+                    .toggleStatusFilter(status);
+              },
+            ),
             SizedBox(height: compact ? 12 : 16),
             if (ctrl.loading)
               const Expanded(
@@ -138,6 +148,10 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
               )
             else if (ctrl.error != null)
               Expanded(child: Center(child: Text(ctrl.error!)))
+            else if (ctrl.selectedStatuses.isEmpty)
+              const Expanded(
+                child: Center(child: Text('Wybierz status')),
+              )
             else if (page == null || page.content.isEmpty)
               const Expanded(
                 child: Center(child: Text('Brak grzybobrań')),
@@ -199,6 +213,54 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
   }
 }
 
+class _StatusFilterChips extends StatelessWidget {
+  const _StatusFilterChips({
+    required this.selected,
+    required this.compact,
+    required this.onToggle,
+  });
+
+  final Set<GrzybobranieStatus> selected;
+  final bool compact;
+  final ValueChanged<GrzybobranieStatus> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = GrzybobranieStatus.values.map((status) {
+      final isOn = selected.contains(status);
+      return FilterChip(
+        label: Text(
+          compact ? _shortStatus(status) : status.label,
+          style: TextStyle(fontSize: compact ? 12 : 13),
+        ),
+        selected: isOn,
+        visualDensity: VisualDensity.compact,
+        onSelected: (_) => onToggle(status),
+      );
+    }).toList();
+
+    if (compact) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < chips.length; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              chips[i],
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: chips,
+    );
+  }
+}
+
 class _GrzybobranieTile extends StatelessWidget {
   const _GrzybobranieTile({required this.item, required this.compact});
 
@@ -251,19 +313,6 @@ class _GrzybobranieTile extends StatelessWidget {
     );
   }
 
-  String _shortStatus(GrzybobranieStatus status) {
-    switch (status) {
-      case GrzybobranieStatus.planowane:
-        return 'Plan.';
-      case GrzybobranieStatus.odroczone:
-        return 'Odr.';
-      case GrzybobranieStatus.wToku:
-        return 'W toku';
-      case GrzybobranieStatus.zakonczone:
-        return 'Koniec';
-    }
-  }
-
   Color _statusColor(GrzybobranieStatus status) {
     switch (status) {
       case GrzybobranieStatus.planowane:
@@ -274,6 +323,23 @@ class _GrzybobranieTile extends StatelessWidget {
         return Colors.green;
       case GrzybobranieStatus.zakonczone:
         return Colors.grey;
+      case GrzybobranieStatus.zarchiwizowane:
+        return Colors.blueGrey;
     }
+  }
+}
+
+String _shortStatus(GrzybobranieStatus status) {
+  switch (status) {
+    case GrzybobranieStatus.planowane:
+      return 'Plan.';
+    case GrzybobranieStatus.odroczone:
+      return 'Odr.';
+    case GrzybobranieStatus.wToku:
+      return 'W toku';
+    case GrzybobranieStatus.zakonczone:
+      return 'Koniec';
+    case GrzybobranieStatus.zarchiwizowane:
+      return 'Arch.';
   }
 }

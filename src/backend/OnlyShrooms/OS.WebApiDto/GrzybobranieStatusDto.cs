@@ -6,4 +6,5 @@ public enum GrzybobranieStatusDto
     Odroczone,
     WToku,
     Zakonczone,
+    Zarchiwizowane,
 }

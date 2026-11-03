@@ -38,11 +38,4 @@ public class GrzybobranieController(IGrzybobranieService service) : ControllerBa
         var updated = await service.UpdateAsync(id, GrzybobranieDtoMapper.ToModel(request), cancellationToken);
         return updated is null ? NotFound() : Ok(GrzybobranieDtoMapper.ToResponse(updated));
     }
-
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
-    {
-        var deleted = await service.DeleteAsync(id, cancellationToken);
-        return deleted ? NoContent() : NotFound();
-    }
 }

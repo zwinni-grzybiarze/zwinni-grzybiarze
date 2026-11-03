@@ -2,6 +2,7 @@ import 'package:onlyshrooms/core/page_response.dart';
 import 'package:onlyshrooms/data/grzybobranie/grzybobranie_repository.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
+import 'package:onlyshrooms/domain/status.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 
 class MockGrzybobranieRepository implements GrzybobranieRepository {
@@ -112,6 +113,7 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
     int page = 0,
     int size = 10,
     String? sort,
+    Set<GrzybobranieStatus>? statuses,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     var filtered = List<Grzybobranie>.from(_items);
@@ -121,6 +123,11 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
           .where((g) => g.nazwa.toLowerCase().contains(q))
           .toList();
     }
+    final allowed = statuses ?? GrzybobranieStatus.defaultListFilters;
+    filtered = filtered.where((g) {
+      final status = g.status;
+      return status != null && allowed.contains(status);
+    }).toList();
     filtered.sort((a, b) => a.nazwa.compareTo(b.nazwa));
     return PageResponse.fromList(filtered, page: page, size: size);
   }
@@ -158,12 +165,6 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
     }
     _items[index] = item;
     return item;
-  }
-
-  @override
-  Future<void> delete(String id) async {
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    _items.removeWhere((g) => g.id == id);
   }
 
   Grzybobranie _require(String id) {

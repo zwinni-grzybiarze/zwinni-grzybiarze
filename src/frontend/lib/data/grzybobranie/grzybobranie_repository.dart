@@ -1,6 +1,7 @@
 import 'package:onlyshrooms/core/page_response.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
+import 'package:onlyshrooms/domain/status.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 
 abstract class GrzybobranieRepository {
@@ -9,6 +10,7 @@ abstract class GrzybobranieRepository {
     int page = 0,
     int size = 10,
     String? sort,
+    Set<GrzybobranieStatus>? statuses,
   });
 
   Future<Grzybobranie?> getById(String id);
@@ -16,8 +18,6 @@ abstract class GrzybobranieRepository {
   Future<Grzybobranie> create(Grzybobranie item);
 
   Future<Grzybobranie> update(Grzybobranie item);
-
-  Future<void> delete(String id);
 
   Future<List<Zadanie>> listZadania(String grzybobranieId);
 

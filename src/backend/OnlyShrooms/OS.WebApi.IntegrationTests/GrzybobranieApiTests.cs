@@ -168,32 +168,11 @@ public sealed class GrzybobranieApiTests
     [DataRow("ODROCZONE")]
     [DataRow("W_TOKU")]
     [DataRow("ZAKONCZONE")]
+    [DataRow("ZARCHIWIZOWANE")]
     public async Task Status_RoundTripsAsUpperSnakeCase(string status)
     {
         var created = await CreateAsync(ValidRequest(status: status));
 
         Assert.AreEqual(status, created.GetProperty("status").GetString());
-    }
-
-    [TestMethod]
-    public async Task Delete_RemovesItem()
-    {
-        var created = await CreateAsync();
-        var id = created.GetProperty("grzybobranieId").GetInt32();
-
-        var response = await _client.DeleteAsync($"/api/grzybobrania/{id}");
-
-        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
-
-        var getResponse = await _client.GetAsync($"/api/grzybobrania/{id}");
-        Assert.AreEqual(HttpStatusCode.NotFound, getResponse.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Delete_UnknownId_ReturnsNotFound()
-    {
-        var response = await _client.DeleteAsync("/api/grzybobrania/999999");
-
-        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

@@ -47,18 +47,4 @@ internal sealed class GrzybobranieRepository(OsDbContext context) : IGrzybobrani
 
         return GrzybobranieMapper.ToModel(entity);
     }
-
-    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var entity = await context.Grzybobrania.SingleOrDefaultAsync(e => e.Id == id, cancellationToken);
-        if (entity is null)
-        {
-            return false;
-        }
-
-        context.Grzybobrania.Remove(entity);
-        await context.SaveChangesAsync(cancellationToken);
-
-        return true;
-    }
 }

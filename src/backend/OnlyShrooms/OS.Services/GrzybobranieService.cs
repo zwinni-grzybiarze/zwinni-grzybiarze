@@ -28,9 +28,6 @@ internal sealed class GrzybobranieService(IGrzybobranieRepository repository) : 
         return repository.UpdateAsync(normalized, cancellationToken);
     }
 
-    public Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
-        => repository.DeleteAsync(id, cancellationToken);
-
     private static Grzybobranie Normalize(Grzybobranie source)
     {
         var nazwa = source.Nazwa?.Trim();
