@@ -7,4 +7,5 @@ public class ZadanieEntity
     public string Tytuł { get; set; } = string.Empty;
 
     public string? Opis { get; set; }
+    public ZadanieStatus Status { get; set; }
 }

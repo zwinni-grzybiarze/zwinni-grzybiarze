@@ -19,6 +19,7 @@ public sealed class ZadanieServiceTests
     {
         Tytuł = "Maślaki",
         Opis = "Opis",
+        Status = ZadanieStatus.Zarchiwizowane,
     };
 
     [TestMethod]
@@ -55,11 +56,13 @@ public sealed class ZadanieServiceTests
         var changes = Valid();
         changes.Id = 777;
         changes.Opis = "Nowy opis";
+        changes.Status = ZadanieStatus.Zamknięte;
         var updated = await _service.UpdateAsync(created.Id, changes);
 
         Assert.IsNotNull(updated);
         Assert.AreEqual(created.Id, updated.Id);
         Assert.AreEqual("Nowy opis", updated.Opis);
+        Assert.AreEqual(ZadanieStatus.Zamknięte, updated.Status);
     }
 
     [TestMethod]

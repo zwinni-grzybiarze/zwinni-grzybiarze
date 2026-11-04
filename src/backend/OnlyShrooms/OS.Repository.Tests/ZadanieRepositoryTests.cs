@@ -32,10 +32,11 @@ public sealed class ZadanieRepositoryTests
         await _connection.DisposeAsync();
     }
 
-    private static Zadanie Create(string tytuł = "Kupić śliwki") => new()
+    private static Zadanie Create(string tytuł = "Kupić śliwki", ZadanieStatus status = ZadanieStatus.Otwarte) => new()
     {
         Tytuł = tytuł,
-        Opis = "Opis zadania"
+        Opis = "Opis zadania",
+        Status = status,
     };
 
     [TestMethod]
@@ -49,6 +50,7 @@ public sealed class ZadanieRepositoryTests
         Assert.IsNotNull(loaded);
         Assert.AreEqual("Kupić śliwki", loaded.Tytuł);
         Assert.AreEqual("Opis Zadania", loaded.Opis);
+        Assert.AreEqual(ZadanieStatus.Otwarte, loaded.Status);
     }
 
     [TestMethod]
@@ -75,6 +77,7 @@ public sealed class ZadanieRepositoryTests
 
         added.Tytuł = "Zmieniony tytuł";
         added.Opis = null;
+        added.Status = ZadanieStatus.Zamknięte;
         var updated = await _repository.UpdateAsync(added);
 
         Assert.IsNotNull(updated);
@@ -84,6 +87,7 @@ public sealed class ZadanieRepositoryTests
         Assert.IsNotNull(loaded);
         Assert.AreEqual("Zmieniony tytuł", loaded.Tytuł);
         Assert.IsNull(loaded.Opis);
+        Assert.AreEqual(ZadanieStatus.Zamknięte, loaded.Status);
     }
 
     [TestMethod]
