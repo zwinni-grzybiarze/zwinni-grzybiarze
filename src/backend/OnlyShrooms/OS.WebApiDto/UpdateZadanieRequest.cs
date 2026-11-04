@@ -10,4 +10,5 @@ public class UpdateZadanieRequest
 
     [StringLength(10000)]
     public string? Opis { get; set; }
+    public ZadanieStatusDto Status { get; set; }
 }

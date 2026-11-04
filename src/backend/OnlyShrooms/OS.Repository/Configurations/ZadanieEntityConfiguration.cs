@@ -13,5 +13,6 @@ internal sealed class ZadanieEntityConfiguration : IEntityTypeConfiguration<Zada
 
         builder.Property(e => e.Tytuł).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Opis);
+        builder.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
     }
 }

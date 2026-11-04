@@ -10,4 +10,5 @@ public class ZadanieResponse
     public string Tytuł { get; set; } = string.Empty;
 
     public string? Opis { get; set; }
+    public ZadanieStatusDto Status { get; set; }
 }

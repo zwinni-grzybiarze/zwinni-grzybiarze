@@ -53,23 +53,28 @@ namespace OS.Repository.Migrations
                 });
 
             modelBuilder.Entity("OS.Entities.ZadanieEntity", b =>
-            {
-                b.Property<int>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("INTEGER");
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
-                b.Property<string>("Tytuł")
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    b.Property<string>("Opis")
+                        .HasColumnType("TEXT");
 
-                b.Property<string>("Opis")
-                    .HasColumnType("TEXT");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
-                b.HasKey("Id");
+                    b.Property<string>("Tytuł")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
 
-                b.ToTable("Zadania", (string)null);
-            });
+                    b.HasKey("Id");
+
+                    b.ToTable("Zadania", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

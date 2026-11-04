@@ -33,7 +33,7 @@ internal sealed class ZadanieService(IZadanieRepository repository) : IZadanieSe
         var tytuł = source.Tytuł?.Trim();
         if (string.IsNullOrEmpty(tytuł))
         {
-            throw new ValidationFailedException("Nazwa is required.");
+            throw new ValidationFailedException("Tytuł is required.");
         }
 
         var opis = source.Opis?.Trim();
@@ -43,6 +43,7 @@ internal sealed class ZadanieService(IZadanieRepository repository) : IZadanieSe
             Id = source.Id,
             Tytuł = tytuł,
             Opis = string.IsNullOrEmpty(opis) ? null : opis,
+            Status = source.Status,
         };
     }
 }
