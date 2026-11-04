@@ -13,7 +13,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="Moq" />
     <PackageReference Include="Riok.Mapperly" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
   </ItemGroup>
 
   <ItemGroup>

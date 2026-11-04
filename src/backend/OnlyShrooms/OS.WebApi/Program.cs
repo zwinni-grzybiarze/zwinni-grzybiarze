@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using OS.Repository.DependencyInjection;
 using OS.Services.DependencyInjection;
 using OS.WebApi.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,9 +31,39 @@ builder.Host.UseDefaultServiceProvider(options =>
     options.ValidateScopes = true;
     options.ValidateOnBuild = true;
 });
+var keycloakIssuer =
+    builder.Configuration["Authentication:Keycloak:Issuer"]
+    ?? "http://localhost:8081/realms/onlyshrooms";
+
+var keycloakMetadataAddress =
+    builder.Configuration["Authentication:Keycloak:MetadataAddress"]
+    ?? "http://keycloak:8080/realms/onlyshrooms/.well-known/openid-configuration";
+
+var keycloakAudience =
+    builder.Configuration["Authentication:Keycloak:Audience"]
+    ?? "onlyshrooms-api";
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MetadataAddress = keycloakMetadataAddress;
+        options.RequireHttpsMetadata = false; // Local HTTP development only.
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = keycloakIssuer,
+            ValidateAudience = true,
+            ValidAudience = keycloakAudience,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+    });
+
 
 var app = builder.Build();
-
 await app.Services.MigrateOsDatabaseAsync();
 
 // Configure the HTTP request pipeline.
@@ -47,6 +79,7 @@ app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

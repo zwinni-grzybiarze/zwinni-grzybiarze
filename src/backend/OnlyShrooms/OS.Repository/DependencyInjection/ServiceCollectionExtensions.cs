@@ -12,7 +12,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddDbContext<OsDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<IGrzybobranieRepository, GrzybobranieRepository>();
-
+        services.AddScoped<IGrzybiarzRepository, GrzybiarzRepository>();
         return services;
     }
 

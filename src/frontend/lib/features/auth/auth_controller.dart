@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:onlyshrooms/data/auth/auth_repository.dart';
-import 'package:onlyshrooms/data/auth/stub_auth_repository.dart';
+import 'package:onlyshrooms/data/auth/keycloak_auth_repository.dart';
+import 'package:onlyshrooms/data/auth/keycloak_manager.dart';
+import 'package:onlyshrooms/core/api_client.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  final repo = StubAuthRepository();
-  ref.onDispose(repo.dispose);
-  return repo;
+  return KeycloakAuthRepository(keycloakManager, createApiClient());
 });
 
 final authControllerProvider =
