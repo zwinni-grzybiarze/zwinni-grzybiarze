@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using OS.WebApiDto;
 
 namespace OS.WebApi.IntegrationTests;
 
@@ -22,14 +23,16 @@ public sealed class GrzybobranieApiTests
     [TestCleanup]
     public void Cleanup() => _client.Dispose();
 
-    private static object ValidRequest(string nazwa = "Borowiki", string status = "PLANOWANE") => new
+    private static object ValidRequest(
+        string nazwa = "Borowiki",
+        GrzybobranieStatusDto status = GrzybobranieStatusDto.PLANOWANE) => new
     {
         nazwa,
         opis = "Duży opis grzybobrania",
         lokalizacja = "Las pod Krakowem",
         dataOd = "2026-09-01T08:00:00Z",
         dataDo = "2026-09-01T16:00:00Z",
-        status,
+        status = status.ToString(),
     };
 
     private async Task<JsonElement> CreateAsync(object? request = null)
@@ -50,7 +53,7 @@ public sealed class GrzybobranieApiTests
         Assert.IsGreaterThan(0, id);
         Assert.EndsWith($"/api/grzybobrania/{id}", response.Headers.Location!.ToString());
         Assert.AreEqual("Borowiki", body.GetProperty("nazwa").GetString());
-        Assert.AreEqual("PLANOWANE", body.GetProperty("status").GetString());
+        Assert.AreEqual(GrzybobranieStatusDto.PLANOWANE.ToString(), body.GetProperty("status").GetString());
         Assert.AreEqual("2026-09-01T08:00:00Z", body.GetProperty("dataOd").GetString());
     }
 
@@ -92,12 +95,14 @@ public sealed class GrzybobranieApiTests
         var created = await CreateAsync();
         var id = created.GetProperty("grzybobranieId").GetInt32();
 
-        var response = await _client.PutAsJsonAsync($"/api/grzybobrania/{id}", ValidRequest("Zmienione", "W_TOKU"));
+        var response = await _client.PutAsJsonAsync(
+            $"/api/grzybobrania/{id}",
+            ValidRequest("Zmienione", GrzybobranieStatusDto.W_TOKU));
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var item = await _client.GetFromJsonAsync<JsonElement>($"/api/grzybobrania/{id}");
         Assert.AreEqual("Zmienione", item.GetProperty("nazwa").GetString());
-        Assert.AreEqual("W_TOKU", item.GetProperty("status").GetString());
+        Assert.AreEqual(GrzybobranieStatusDto.W_TOKU.ToString(), item.GetProperty("status").GetString());
     }
 
     [TestMethod]
@@ -157,22 +162,22 @@ public sealed class GrzybobranieApiTests
             lokalizacja = "Las",
             dataOd = "2026-09-02T08:00:00Z",
             dataDo = "2026-09-01T08:00:00Z",
-            status = "PLANOWANE",
+            status = GrzybobranieStatusDto.PLANOWANE.ToString(),
         });
 
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [TestMethod]
-    [DataRow("PLANOWANE")]
-    [DataRow("ODROCZONE")]
-    [DataRow("W_TOKU")]
-    [DataRow("ZAKONCZONE")]
-    [DataRow("ZARCHIWIZOWANE")]
-    public async Task Status_RoundTripsAsUpperSnakeCase(string status)
+    [DataRow(GrzybobranieStatusDto.PLANOWANE)]
+    [DataRow(GrzybobranieStatusDto.ODROCZONE)]
+    [DataRow(GrzybobranieStatusDto.W_TOKU)]
+    [DataRow(GrzybobranieStatusDto.ZAKONCZONE)]
+    [DataRow(GrzybobranieStatusDto.ZARCHIWIZOWANE)]
+    public async Task Status_RoundTripsAsUpperSnakeCase(GrzybobranieStatusDto status)
     {
         var created = await CreateAsync(ValidRequest(status: status));
 
-        Assert.AreEqual(status, created.GetProperty("status").GetString());
+        Assert.AreEqual(status.ToString(), created.GetProperty("status").GetString());
     }
 }

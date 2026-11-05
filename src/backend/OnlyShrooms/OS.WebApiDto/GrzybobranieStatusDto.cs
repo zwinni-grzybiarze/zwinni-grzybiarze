@@ -2,9 +2,9 @@ namespace OS.WebApiDto;
 
 public enum GrzybobranieStatusDto
 {
-    Planowane,
-    Odroczone,
-    WToku,
-    Zakonczone,
-    Zarchiwizowane,
+    PLANOWANE,
+    ODROCZONE,
+    W_TOKU,
+    ZAKONCZONE,
+    ZARCHIWIZOWANE,
 }

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using OS.Repository.DependencyInjection;
 using OS.Services.DependencyInjection;
@@ -12,8 +11,8 @@ builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
+        // Enum member names are the wire format (PLANOWANE, W_TOKU, …).
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ValidationFailedExceptionHandler>();

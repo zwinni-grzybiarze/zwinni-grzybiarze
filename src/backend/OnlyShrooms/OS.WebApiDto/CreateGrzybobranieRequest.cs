@@ -21,5 +21,5 @@ public class CreateGrzybobranieRequest
     [Required]
     public DateTime? DataDo { get; set; }
 
-    public GrzybobranieStatusDto Status { get; set; } = GrzybobranieStatusDto.Planowane;
+    public GrzybobranieStatusDto Status { get; set; } = GrzybobranieStatusDto.PLANOWANE;
 }
