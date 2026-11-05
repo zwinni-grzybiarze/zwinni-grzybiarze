@@ -2,9 +2,9 @@ namespace OS.Entities;
 
 public enum GrzybobranieStatus
 {
-    Planowane,
-    Odroczone,
-    WToku,
-    Zakonczone,
-    Zarchiwizowane,
+    PLANOWANE,
+    ODROCZONE,
+    W_TOKU,
+    ZAKONCZONE,
+    ZARCHIWIZOWANE,
 }

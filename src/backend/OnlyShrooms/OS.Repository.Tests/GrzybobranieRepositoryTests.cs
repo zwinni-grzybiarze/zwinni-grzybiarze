@@ -32,7 +32,7 @@ public sealed class GrzybobranieRepositoryTests
         await _connection.DisposeAsync();
     }
 
-    private static Grzybobranie Create(string nazwa = "Borowiki", GrzybobranieStatus status = GrzybobranieStatus.Planowane) => new()
+    private static Grzybobranie Create(string nazwa = "Borowiki", GrzybobranieStatus status = GrzybobranieStatus.PLANOWANE) => new()
     {
         Nazwa = nazwa,
         Opis = "Opis grzybobrania",
@@ -56,7 +56,7 @@ public sealed class GrzybobranieRepositoryTests
         Assert.AreEqual("Las pod Krakowem", loaded.Lokalizacja);
         Assert.AreEqual(new DateTime(2026, 9, 1, 8, 0, 0, DateTimeKind.Utc), loaded.DataOd);
         Assert.AreEqual(new DateTime(2026, 9, 1, 16, 30, 0, DateTimeKind.Utc), loaded.DataDo);
-        Assert.AreEqual(GrzybobranieStatus.Planowane, loaded.Status);
+        Assert.AreEqual(GrzybobranieStatus.PLANOWANE, loaded.Status);
     }
 
     [TestMethod]
@@ -95,7 +95,7 @@ public sealed class GrzybobranieRepositoryTests
 
         added.Nazwa = "Zmienione";
         added.Opis = null;
-        added.Status = GrzybobranieStatus.WToku;
+        added.Status = GrzybobranieStatus.W_TOKU;
         added.DataDo = new DateTime(2026, 9, 2, 12, 0, 0, DateTimeKind.Utc);
         var updated = await _repository.UpdateAsync(added);
 
@@ -106,7 +106,7 @@ public sealed class GrzybobranieRepositoryTests
         Assert.IsNotNull(loaded);
         Assert.AreEqual("Zmienione", loaded.Nazwa);
         Assert.IsNull(loaded.Opis);
-        Assert.AreEqual(GrzybobranieStatus.WToku, loaded.Status);
+        Assert.AreEqual(GrzybobranieStatus.W_TOKU, loaded.Status);
         Assert.AreEqual(new DateTime(2026, 9, 2, 12, 0, 0, DateTimeKind.Utc), loaded.DataDo);
     }
 
@@ -122,12 +122,12 @@ public sealed class GrzybobranieRepositoryTests
     [TestMethod]
     public async Task Status_IsStoredAsReadableText()
     {
-        var added = await _repository.AddAsync(Create(status: GrzybobranieStatus.Zakonczone));
+        var added = await _repository.AddAsync(Create(status: GrzybobranieStatus.ZAKONCZONE));
 
         await using var command = _connection.CreateCommand();
         command.CommandText = "SELECT Status FROM Grzybobrania WHERE Id = $id";
         command.Parameters.AddWithValue("$id", added.Id);
 
-        Assert.AreEqual("Zakonczone", (string?)await command.ExecuteScalarAsync());
+        Assert.AreEqual(GrzybobranieStatus.ZAKONCZONE.ToString(), (string?)await command.ExecuteScalarAsync());
     }
 }
