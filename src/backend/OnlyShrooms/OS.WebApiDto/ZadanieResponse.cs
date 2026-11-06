@@ -7,7 +7,7 @@ public class ZadanieResponse
     [JsonPropertyName("zadanieId")]
     public int Id { get; set; }
 
-    public string Tytuł { get; set; } = string.Empty;
+    public string Nazwa { get; set; } = string.Empty;
 
     public string? Opis { get; set; }
     public ZadanieStatusDto Status { get; set; }

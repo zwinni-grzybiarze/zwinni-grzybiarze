@@ -30,10 +30,10 @@ internal sealed class ZadanieService(IZadanieRepository repository) : IZadanieSe
 
     private static Zadanie Normalize(Zadanie source)
     {
-        var tytuł = source.Tytuł?.Trim();
-        if (string.IsNullOrEmpty(tytuł))
+        var nazwa = source.Nazwa?.Trim();
+        if (string.IsNullOrEmpty(nazwa))
         {
-            throw new ValidationFailedException("Tytuł is required.");
+            throw new ValidationFailedException("Nazwa is required.");
         }
 
         var opis = source.Opis?.Trim();
@@ -41,7 +41,7 @@ internal sealed class ZadanieService(IZadanieRepository repository) : IZadanieSe
         return new Zadanie
         {
             Id = source.Id,
-            Tytuł = tytuł,
+            Nazwa = nazwa,
             Opis = string.IsNullOrEmpty(opis) ? null : opis,
             Status = source.Status,
         };

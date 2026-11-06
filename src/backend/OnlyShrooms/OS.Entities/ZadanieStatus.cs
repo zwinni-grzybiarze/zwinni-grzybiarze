@@ -2,7 +2,7 @@ namespace OS.Entities;
 
 public enum ZadanieStatus
 {
-    Zamknięte,
     Otwarte,
+    Zamknięte,
     Zarchiwizowane,
 }

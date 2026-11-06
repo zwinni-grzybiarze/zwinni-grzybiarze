@@ -22,9 +22,9 @@ public sealed class ZadanieApiTests
     [TestCleanup]
     public void Cleanup() => _client.Dispose();
 
-    private static object ValidRequest(string tytuł = "Podgrzybki", string status = "OTWARTE") => new
+    private static object ValidRequest(string nazwa = "Podgrzybki", string status = "OTWARTE") => new
     {
-        tytuł,
+        nazwa,
         opis = "Potężny opis zadania",
         status,
     };
@@ -46,7 +46,7 @@ public sealed class ZadanieApiTests
         var id = body.GetProperty("zadanieId").GetInt32();
         Assert.IsGreaterThan(0, id);
         Assert.EndsWith($"/api/zadania/{id}", response.Headers.Location!.ToString());
-        Assert.AreEqual("Podgrzybki", body.GetProperty("tytuł").GetString());
+        Assert.AreEqual("Podgrzybki", body.GetProperty("nazwa").GetString());
         Assert.AreEqual("OTWARTE", body.GetProperty("status").GetString());
     }
 
@@ -91,7 +91,7 @@ public sealed class ZadanieApiTests
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var item = await _client.GetFromJsonAsync<JsonElement>($"/api/zadania/{id}");
-        Assert.AreEqual("Zmieniony", item.GetProperty("tytuł").GetString());
+        Assert.AreEqual("Zmieniony", item.GetProperty("nazwa").GetString());
         Assert.AreEqual("ZAMKNIĘTE", item.GetProperty("status").GetString());
     }
 
@@ -104,7 +104,7 @@ public sealed class ZadanieApiTests
     }
 
     [TestMethod]
-    public async Task Post_MissingTytuł_Returns400()
+    public async Task Post_MissingNazwa_Returns400()
     {
         var response = await _client.PostAsJsonAsync("/api/zadania", new
         {

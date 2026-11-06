@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using OS.Entities;
 using OS.Model;
 using OS.Repository.Repositories;
 
@@ -32,9 +33,9 @@ public sealed class ZadanieRepositoryTests
         await _connection.DisposeAsync();
     }
 
-    private static Zadanie Create(string tytuł = "Kupić śliwki", ZadanieStatus status = ZadanieStatus.Otwarte) => new()
+    private static Zadanie Create(string nazwa = "Kupić śliwki", Model.ZadanieStatus status = Model.ZadanieStatus.Otwarte) => new()
     {
-        Tytuł = tytuł,
+        Nazwa = nazwa,
         Opis = "Opis zadania",
         Status = status,
     };
@@ -48,9 +49,9 @@ public sealed class ZadanieRepositoryTests
 
         var loaded = await _repository.GetByIdAsync(added.Id);
         Assert.IsNotNull(loaded);
-        Assert.AreEqual("Kupić śliwki", loaded.Tytuł);
-        Assert.AreEqual("Opis Zadania", loaded.Opis);
-        Assert.AreEqual(ZadanieStatus.Otwarte, loaded.Status);
+        Assert.AreEqual("Kupić śliwki", loaded.Nazwa);
+        Assert.AreEqual("Opis zadania", loaded.Opis);
+        Assert.AreEqual(Model.ZadanieStatus.Otwarte, loaded.Status);
     }
 
     [TestMethod]
@@ -67,7 +68,7 @@ public sealed class ZadanieRepositoryTests
 
         var all = await _repository.GetAllAsync();
 
-        CollectionAssert.AreEquivalent(new[] { "Pierwsze", "Drugie" }, all.Select(g => g.Tytuł).ToArray());
+        CollectionAssert.AreEquivalent(new[] { "Pierwsze", "Drugie" }, all.Select(g => g.Nazwa).ToArray());
     }
 
     [TestMethod]
@@ -75,9 +76,9 @@ public sealed class ZadanieRepositoryTests
     {
         var added = await _repository.AddAsync(Create());
 
-        added.Tytuł = "Zmieniony tytuł";
+        added.Nazwa = "Zmieniony tytuł";
         added.Opis = null;
-        added.Status = ZadanieStatus.Zamknięte;
+        added.Status = Model.ZadanieStatus.Zamknięte;
         var updated = await _repository.UpdateAsync(added);
 
         Assert.IsNotNull(updated);
@@ -85,9 +86,9 @@ public sealed class ZadanieRepositoryTests
 
         var loaded = await _repository.GetByIdAsync(added.Id);
         Assert.IsNotNull(loaded);
-        Assert.AreEqual("Zmieniony tytuł", loaded.Tytuł);
+        Assert.AreEqual("Zmieniony tytuł", loaded.Nazwa);
         Assert.IsNull(loaded.Opis);
-        Assert.AreEqual(ZadanieStatus.Zamknięte, loaded.Status);
+        Assert.AreEqual(Model.ZadanieStatus.Zamknięte, loaded.Status);
     }
 
     [TestMethod]
@@ -97,5 +98,30 @@ public sealed class ZadanieRepositoryTests
         missing.Id = 12345;
 
         Assert.IsNull(await _repository.UpdateAsync(missing));
+    }
+
+    [TestMethod]
+    public void ZadanieStatus_NamesDoNotExceedDatabaseLimit()
+    {
+        var statusProperty = _context.Model
+            .FindEntityType(typeof(ZadanieEntity))!
+            .FindProperty(nameof(ZadanieEntity.Status));
+
+        Assert.IsNotNull(statusProperty);
+
+        var maxLength = statusProperty.GetMaxLength();
+
+        Assert.IsNotNull(maxLength);
+
+        var statusNames = Enum.GetNames<Entities.ZadanieStatus>();
+
+        foreach (var status in statusNames)
+        {
+            Assert.IsTrue(
+                status.Length <= maxLength.Value,
+                $"Status '{status}' ma {status.Length} znaków, " +
+                $"a maksymalna długość w bazie wynosi {maxLength.Value}."
+            );
+        }
     }
 }
