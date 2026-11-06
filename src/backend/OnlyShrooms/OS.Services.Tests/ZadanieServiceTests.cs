@@ -17,7 +17,7 @@ public sealed class ZadanieServiceTests
 
     private static Zadanie Valid() => new()
     {
-        Tytuł = "Maślaki",
+        Nazwa = "Maślaki",
         Opis = "Opis",
         Status = ZadanieStatus.Zarchiwizowane,
     };
@@ -27,23 +27,23 @@ public sealed class ZadanieServiceTests
     {
         var input = Valid();
         input.Id = 99;
-        input.Tytuł = "  Maślaki  ";
+        input.Nazwa = "  Maślaki  ";
         input.Opis = "   ";
 
         var created = await _service.CreateAsync(input);
 
         Assert.AreEqual(1, created.Id);
-        Assert.AreEqual("Maślaki", created.Tytuł);
+        Assert.AreEqual("Maślaki", created.Nazwa);
         Assert.IsNull(created.Opis);
     }
 
     [TestMethod]
     [DataRow("")]
     [DataRow("   ")]
-    public async Task CreateAsync_BlankTytuł_Throws(string tytuł)
+    public async Task CreateAsync_BlankNazwa_Throws(string nazwa)
     {
         var input = Valid();
-        input.Tytuł = tytuł;
+        input.Nazwa = nazwa;
 
         await Assert.ThrowsExactlyAsync<ValidationFailedException>(() => _service.CreateAsync(input));
     }
