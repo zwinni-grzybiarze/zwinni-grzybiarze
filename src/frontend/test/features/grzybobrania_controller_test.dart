@@ -1,13 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onlyshrooms/data/grzybobranie/mock_grzybobranie_repository.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
+import 'package:onlyshrooms/domain/status.dart';
 import 'package:onlyshrooms/features/grzybobrania/grzybobrania_controller.dart';
 
 void main() {
+  late MockGrzybobranieRepository repo;
   late GrzybobraniaController controller;
 
   setUp(() {
-    controller = GrzybobraniaController(MockGrzybobranieRepository());
+    repo = MockGrzybobranieRepository();
+    controller = GrzybobraniaController(repo);
   });
 
   tearDown(() {
@@ -51,6 +54,49 @@ void main() {
     expect(
       controller.page!.content.any((g) => g.id == created.id),
       isTrue,
+    );
+  });
+
+  test('remove soft-archives and hides from default list', () async {
+    await controller.loadDetail('1');
+    await controller.remove('1');
+
+    expect(controller.selected, isNull);
+    expect(
+      controller.selectedStatuses.contains(GrzybobranieStatus.zarchiwizowane),
+      isFalse,
+    );
+    expect(controller.page!.content.any((g) => g.id == '1'), isFalse);
+
+    final archived = await repo.getById('1');
+    expect(archived, isNotNull);
+    expect(archived!.status, GrzybobranieStatus.zarchiwizowane);
+
+    await controller.toggleStatusFilter(GrzybobranieStatus.zarchiwizowane);
+    expect(controller.page!.content.any((g) => g.id == '1'), isTrue);
+  });
+
+  test('toggleStatusFilter narrows results', () async {
+    await controller.loadList(page: 0);
+    await controller.loadList(
+      page: 0,
+      statuses: {GrzybobranieStatus.wToku},
+    );
+    expect(controller.selectedStatuses, {GrzybobranieStatus.wToku});
+    expect(
+      controller.page!.content.every((g) => g.status == GrzybobranieStatus.wToku),
+      isTrue,
+    );
+  });
+
+  test('remove rejects already archived item', () async {
+    await controller.loadDetail('1');
+    await controller.remove('1');
+    await controller.loadDetail('1');
+
+    await expectLater(
+      controller.remove('1'),
+      throwsA(isA<StateError>()),
     );
   });
 }

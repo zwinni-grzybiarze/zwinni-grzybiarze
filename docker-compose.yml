@@ -1,0 +1,37 @@
+# LAN showcase stack: API+Flutter PWA behind Caddy HTTPS.
+# Build image first: ./build-local.sh
+# Then:            docker compose up
+#
+# From a phone on the same Wi‑Fi: https://<this-machine-lan-ip>
+# Accept the certificate warning once, then Chrome → Install app.
+
+services:
+  onlyshrooms:
+    image: ${ONLYSHROOMS_IMAGE:-onlyshrooms}
+    volumes:
+      - onlyshrooms-data:/data
+    expose:
+      - "8080"
+    # Optional: also reachable as plain HTTP on the host (laptop localhost PWA OK).
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      - onlyshrooms
+    ports:
+      # Host :80 is often taken (nginx/apache); HTTPS on 443 is enough for PWA install.
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/tls:/etc/caddy/tls:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+
+volumes:
+  onlyshrooms-data:
+  caddy-data:
+  caddy-config:

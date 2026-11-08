@@ -3,6 +3,7 @@ import 'package:onlyshrooms/core/page_response.dart';
 import 'package:onlyshrooms/data/grzybobranie/grzybobranie_repository.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
+import 'package:onlyshrooms/domain/status.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 
 /// HTTP impl — enabled when USE_MOCK_DATA=false and exposed domain APIs.
@@ -17,6 +18,7 @@ class HttpGrzybobranieRepository implements GrzybobranieRepository {
     int page = 0,
     int size = 10,
     String? sort,
+    Set<GrzybobranieStatus>? statuses,
   }) async {
     final response = await _dio.get<List<dynamic>>('/api/grzybobrania');
     var items = (response.data ?? const <dynamic>[])
@@ -26,6 +28,11 @@ class HttpGrzybobranieRepository implements GrzybobranieRepository {
       final q = nazwa.trim().toLowerCase();
       items = items.where((g) => g.nazwa.toLowerCase().contains(q)).toList();
     }
+    final allowed = statuses ?? GrzybobranieStatus.defaultListFilters;
+    items = items.where((g) {
+      final status = g.status;
+      return status != null && allowed.contains(status);
+    }).toList();
     return PageResponse.fromList(items, page: page, size: size);
   }
 

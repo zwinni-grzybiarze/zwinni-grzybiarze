@@ -22,7 +22,7 @@ public sealed class GrzybobranieServiceTests
         Lokalizacja = "Las",
         DataOd = new DateTime(2026, 9, 1, 8, 0, 0, DateTimeKind.Utc),
         DataDo = new DateTime(2026, 9, 1, 16, 0, 0, DateTimeKind.Utc),
-        Status = GrzybobranieStatus.Planowane,
+        Status = GrzybobranieStatus.PLANOWANE,
     };
 
     [TestMethod]
@@ -92,12 +92,12 @@ public sealed class GrzybobranieServiceTests
 
         var changes = Valid();
         changes.Id = 777;
-        changes.Status = GrzybobranieStatus.Odroczone;
+        changes.Status = GrzybobranieStatus.ODROCZONE;
         var updated = await _service.UpdateAsync(created.Id, changes);
 
         Assert.IsNotNull(updated);
         Assert.AreEqual(created.Id, updated.Id);
-        Assert.AreEqual(GrzybobranieStatus.Odroczone, updated.Status);
+        Assert.AreEqual(GrzybobranieStatus.ODROCZONE, updated.Status);
     }
 
     [TestMethod]

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using OS.Repository.DependencyInjection;
 using OS.Services.DependencyInjection;
@@ -12,8 +11,8 @@ builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
+        // Enum member names are the wire format (PLANOWANE, W_TOKU, …).
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ValidationFailedExceptionHandler>();
@@ -45,7 +44,26 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var path = ctx.File.Name;
+        // Keep the shell fresh so PWA clients pick up new service-worker / index after redeploy.
+        if (path.Equals("index.html", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("flutter_service_worker.js", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("manifest.json", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("flutter_bootstrap.js", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.Headers.CacheControl = "no-cache";
+        }
+
+        if (path.Equals("manifest.json", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.ContentType = "application/manifest+json";
+        }
+    },
+});
 
 app.UseAuthorization();
 

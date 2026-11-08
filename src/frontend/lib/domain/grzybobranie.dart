@@ -31,6 +31,8 @@ class Grzybobranie {
   GrzybobranieStatus? get status =>
       GrzybobranieStatus.tryParse(getField<String>('status'));
 
+  bool get isArchived => status?.isArchived == true;
+
   T? getField<T>(String key) {
     final value = fields[key];
     if (value == null) return null;
