@@ -7,6 +7,8 @@ internal sealed class OsDbContext(DbContextOptions<OsDbContext> options) : DbCon
 {
     public DbSet<GrzybobranieEntity> Grzybobrania => Set<GrzybobranieEntity>();
 
+    public DbSet<ZadanieEntity> Zadania => Set<ZadanieEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(OsDbContext).Assembly);
