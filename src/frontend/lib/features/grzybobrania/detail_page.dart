@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/app_theme.dart';
 import 'package:onlyshrooms/core/responsive.dart';
+import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
-import 'package:onlyshrooms/domain/zadanie.dart';
 import 'package:onlyshrooms/features/grzybobrania/grzybobrania_controller.dart';
 
 class GrzybobranieDetailPage extends ConsumerStatefulWidget {
@@ -25,7 +25,7 @@ class _GrzybobranieDetailPageState
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(grzybobraniaControllerProvider.notifier)
@@ -57,12 +57,18 @@ class _GrzybobranieDetailPageState
           onPressed: () => context.go('/'),
         ),
         actions: [
-          if (g != null)
+          if (g != null && !g.isArchived) ...[
             IconButton(
               tooltip: 'Edytuj',
               onPressed: () => context.go('/grzybobrania/${g.id}/edit'),
               icon: const Icon(Icons.edit),
             ),
+            IconButton(
+              tooltip: 'Usuń',
+              onPressed: () => _confirmDelete(g),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
         ],
         bottom: TabBar(
           controller: _tabs,
@@ -78,12 +84,10 @@ class _GrzybobranieDetailPageState
           tabs: compact
               ? const [
                   Tab(icon: Icon(Icons.info_outline, size: 20), text: 'Info'),
-                  Tab(icon: Icon(Icons.checklist, size: 20), text: 'Zadania'),
                   Tab(icon: Icon(Icons.group, size: 20), text: 'Ekipa'),
                 ]
               : const [
                   Tab(text: 'Szczegóły'),
-                  Tab(text: 'Zadania'),
                   Tab(text: 'Członkowie'),
                 ],
         ),
@@ -96,11 +100,45 @@ class _GrzybobranieDetailPageState
                   controller: _tabs,
                   children: [
                     _OverviewTab(itemId: g.id),
-                    _TasksTab(grzybobranieId: g.id),
                     _MembersTab(grzybobranieId: g.id),
                   ],
                 ),
     );
+  }
+
+  Future<void> _confirmDelete(Grzybobranie g) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usuń grzybobranie'),
+        content: Text(
+          'Usunąć „${g.nazwa}”? Grzybobranie zostanie zarchiwizowane i domyślnie nie będzie widoczne na liście.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Anuluj'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Usuń'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    try {
+      // Future (#46): also archive related zadania once they have a status on BE.
+      await ref.read(grzybobraniaControllerProvider.notifier).remove(g.id);
+      if (!mounted) return;
+      context.go('/');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Nie udało się zarchiwizować: $e')),
+      );
+    }
   }
 }
 
@@ -172,145 +210,6 @@ class _OverviewTab extends ConsumerWidget {
   }
 }
 
-class _TasksTab extends ConsumerWidget {
-  const _TasksTab({required this.grzybobranieId});
-
-  final String grzybobranieId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ctrl = ref.watch(grzybobraniaControllerProvider);
-    final tasks = ctrl.selected?.zadania ?? const [];
-    final compact = context.isCompact;
-
-    return AdaptivePage(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          Padding(
-            padding: context.pagePadding.copyWith(bottom: 8),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: compact
-                  ? IconButton.filled(
-                      onPressed: () => _openTaskDialog(context, ref),
-                      tooltip: 'Dodaj zadanie',
-                      icon: const Icon(Icons.add),
-                    )
-                  : FilledButton.icon(
-                      onPressed: () => _openTaskDialog(context, ref),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Dodaj zadanie'),
-                    ),
-            ),
-          ),
-          Expanded(
-            child: tasks.isEmpty
-                ? const Center(child: Text('Brak zadań'))
-                : ListView.separated(
-                    padding: context.pagePadding.copyWith(top: 0),
-                    itemCount: tasks.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 6),
-                    itemBuilder: (context, i) {
-                      final t = tasks[i];
-                      return Card(
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: compact ? 12 : 16,
-                            vertical: 4,
-                          ),
-                          title: Text(t.tytul),
-                          subtitle: t.opis == null || t.opis!.isEmpty
-                              ? null
-                              : Text(t.opis!),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined),
-                                onPressed: () => _openTaskDialog(
-                                  context,
-                                  ref,
-                                  existing: t,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () => ref
-                                    .read(
-                                      grzybobraniaControllerProvider.notifier,
-                                    )
-                                    .removeZadanie(grzybobranieId, t.id),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _openTaskDialog(
-    BuildContext context,
-    WidgetRef ref, {
-    Zadanie? existing,
-  }) async {
-    final tytul = TextEditingController(text: existing?.tytul ?? '');
-    final opis = TextEditingController(text: existing?.opis ?? '');
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(existing == null ? 'Nowe zadanie' : 'Edycja zadania'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: tytul,
-                decoration: const InputDecoration(labelText: 'Tytuł'),
-              ),
-              TextField(
-                controller: opis,
-                decoration: const InputDecoration(labelText: 'Opis'),
-                maxLines: 3,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Anuluj'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Zapisz'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    if (tytul.text.trim().isEmpty) return;
-    final zadanie = Zadanie(
-      id: existing?.id ?? 'new',
-      grzybobranieId: grzybobranieId,
-      tytul: tytul.text.trim(),
-      opis: opis.text.trim().isEmpty ? null : opis.text.trim(),
-      kolejnosc: existing?.kolejnosc,
-    );
-    await ref.read(grzybobraniaControllerProvider.notifier).saveZadanie(
-          grzybobranieId,
-          zadanie,
-          isNew: existing == null,
-        );
-  }
-}
-
 class _MembersTab extends ConsumerWidget {
   const _MembersTab({required this.grzybobranieId});
 
@@ -320,29 +219,31 @@ class _MembersTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ctrl = ref.watch(grzybobraniaControllerProvider);
     final members = ctrl.selected?.czlonkowie ?? const [];
+    final readOnly = ctrl.selected?.isArchived == true;
     final compact = context.isCompact;
 
     return AdaptivePage(
       padding: EdgeInsets.zero,
       child: Column(
         children: [
-          Padding(
-            padding: context.pagePadding.copyWith(bottom: 8),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: compact
-                  ? IconButton.filled(
-                      onPressed: () => _addMember(context, ref),
-                      tooltip: 'Dodaj członka',
-                      icon: const Icon(Icons.person_add),
-                    )
-                  : FilledButton.icon(
-                      onPressed: () => _addMember(context, ref),
-                      icon: const Icon(Icons.person_add),
-                      label: const Text('Dodaj członka'),
-                    ),
+          if (!readOnly)
+            Padding(
+              padding: context.pagePadding.copyWith(bottom: 8),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: compact
+                    ? IconButton.filled(
+                        onPressed: () => _addMember(context, ref),
+                        tooltip: 'Dodaj członka',
+                        icon: const Icon(Icons.person_add),
+                      )
+                    : FilledButton.icon(
+                        onPressed: () => _addMember(context, ref),
+                        icon: const Icon(Icons.person_add),
+                        label: const Text('Dodaj członka'),
+                      ),
+              ),
             ),
-          ),
           Expanded(
             child: members.isEmpty
                 ? const Center(child: Text('Brak członków'))
@@ -366,12 +267,19 @@ class _MembersTab extends ConsumerWidget {
                           ),
                           title: Text(m.displayName),
                           subtitle: Text(m.email ?? 'id: ${m.id}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.person_remove_outlined),
-                            onPressed: () => ref
-                                .read(grzybobraniaControllerProvider.notifier)
-                                .removeMember(grzybobranieId, m.id),
-                          ),
+                          trailing: readOnly
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(
+                                    Icons.person_remove_outlined,
+                                  ),
+                                  onPressed: () => ref
+                                      .read(
+                                        grzybobraniaControllerProvider
+                                            .notifier,
+                                      )
+                                      .removeMember(grzybobranieId, m.id),
+                                ),
                         ),
                       );
                     },

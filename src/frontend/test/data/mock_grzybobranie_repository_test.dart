@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:onlyshrooms/data/grzybobranie/mock_grzybobranie_repository.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
+import 'package:onlyshrooms/domain/status.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 
 void main() {
@@ -21,6 +22,37 @@ void main() {
       filtered.content.every(
         (g) => g.nazwa.toLowerCase().contains('borowiki'),
       ),
+      isTrue,
+    );
+  });
+
+  test('list filters by status set; archived off by default', () async {
+    final item = await repo.getById('1');
+    expect(item, isNotNull);
+    await repo.update(
+      item!.copyWithField(
+        'status',
+        GrzybobranieStatus.zarchiwizowane.apiValue,
+      ),
+    );
+
+    final hidden = await repo.list(page: 0, size: 20);
+    expect(hidden.content.any((g) => g.id == '1'), isFalse);
+
+    final shown = await repo.list(
+      page: 0,
+      size: 20,
+      statuses: {...GrzybobranieStatus.defaultListFilters, GrzybobranieStatus.zarchiwizowane},
+    );
+    expect(shown.content.any((g) => g.id == '1'), isTrue);
+
+    final onlyPlanowane = await repo.list(
+      page: 0,
+      size: 20,
+      statuses: {GrzybobranieStatus.planowane},
+    );
+    expect(
+      onlyPlanowane.content.every((g) => g.status == GrzybobranieStatus.planowane),
       isTrue,
     );
   });

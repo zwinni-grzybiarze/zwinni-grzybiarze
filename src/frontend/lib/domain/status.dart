@@ -3,12 +3,21 @@ enum GrzybobranieStatus {
   planowane('PLANOWANE', 'Planowane'),
   odroczone('ODROCZONE', 'Odroczone'),
   wToku('W_TOKU', 'W toku'),
-  zakonczone('ZAKONCZONE', 'Zakończone');
+  zakonczone('ZAKONCZONE', 'Zakończone'),
+  zarchiwizowane('ZARCHIWIZOWANE', 'Zarchiwizowane');
 
   const GrzybobranieStatus(this.apiValue, this.label);
 
   final String apiValue;
   final String label;
+
+  bool get isArchived => this == GrzybobranieStatus.zarchiwizowane;
+
+  /// Default list filters: every status except archived.
+  static Set<GrzybobranieStatus> get defaultListFilters => {
+        for (final s in GrzybobranieStatus.values)
+          if (!s.isArchived) s,
+      };
 
   static GrzybobranieStatus? tryParse(String? raw) {
     if (raw == null || raw.isEmpty) return null;
