@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/auth/login_page.dart';
+import 'package:onlyshrooms/features/chat/chat_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/detail_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/edit_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/list_page.dart';
+import 'package:onlyshrooms/features/profil/profil_page.dart';
+import 'package:onlyshrooms/features/shell/main_shell.dart';
 import 'package:onlyshrooms/features/zadania/detail_page.dart';
 import 'package:onlyshrooms/features/zadania/edit_page.dart';
 import 'package:onlyshrooms/features/zadania/list_page.dart';
@@ -31,9 +34,43 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         builder: (context, state) => const LoginPage(),
       ),
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const GrzybobraniaListPage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            MainShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const GrzybobraniaListPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/zadania',
+                builder: (context, state) => const ZadaniaListPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/chat',
+                builder: (context, state) => const ChatPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profil',
+                builder: (context, state) => const ProfilPage(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/grzybobrania/new',
@@ -48,10 +85,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/grzybobrania/:id/edit',
         builder: (context, state) =>
             GrzybobranieEditPage(id: state.pathParameters['id']),
-      ),
-      GoRoute(
-        path: '/zadania',
-        builder: (context, state) => const ZadaniaListPage(),
       ),
       GoRoute(
         path: '/zadania/new',

@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using OS.Repository.DependencyInjection;
 using OS.Services.DependencyInjection;
+using OS.WebApi.Hubs;
 using OS.WebApi.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,7 @@ builder.Services
         // Enum member names are the wire format (PLANOWANE, W_TOKU, …).
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ValidationFailedExceptionHandler>();
 builder.Services.AddCors(options =>
@@ -80,6 +82,7 @@ app.UseCors("LocalFrontend");
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 app.MapFallbackToFile("index.html");
 
 app.Run();
