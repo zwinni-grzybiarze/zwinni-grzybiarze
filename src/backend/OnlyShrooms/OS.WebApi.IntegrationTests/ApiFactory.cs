@@ -19,11 +19,16 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", $"Data Source={_databasePath}");
+        builder.UseSetting("Jwt:Secret", "dummy-key");
+        builder.UseSetting("Authentication:Google:ClientId", "test-google-client-id");
+        builder.UseSetting("Authentication:Google:ClientSecret", "test-google-client-secret");
+
     }
 
-    public HttpClient CreateAuthenticatedClient()
+
+    public HttpClient CreateAuthenticatedClient(string? email = null)
     {
-        var factory = new AuthenticatedApiFactory();
+        var factory = new AuthenticatedApiFactory(email);
         return factory.CreateClient();
     }
 
@@ -45,7 +50,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         }
     }
 
-    protected sealed class AuthenticatedApiFactory : WebApplicationFactory<Program>
+    protected sealed class AuthenticatedApiFactory(string? email = null) : WebApplicationFactory<Program>
     {
         private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"os-tests-auth-{Guid.NewGuid():N}.db");
 
@@ -53,8 +58,15 @@ public class ApiFactory : WebApplicationFactory<Program>
         {
             builder.UseEnvironment("Testing");
             builder.UseSetting("ConnectionStrings:Default", $"Data Source={_databasePath}");
+            builder.UseSetting("Jwt:Secret", "dummy-key");
+            builder.UseSetting("Authentication:Google:ClientId", "test-google-client-id");
+            builder.UseSetting("Authentication:Google:ClientSecret", "test-google-client-secret");
+
+
             builder.ConfigureServices(services =>
             {
+                services.AddSingleton(new TestAuthSettings(email));
+
                 services.AddAuthentication(TestAuthScheme)
                     .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthScheme, _ => { });
 
@@ -95,16 +107,20 @@ public class ApiFactory : WebApplicationFactory<Program>
         private sealed class TestAuthHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
-            UrlEncoder encoder)
+            UrlEncoder encoder,
+            TestAuthSettings settings)
             : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
         {
             protected override Task<AuthenticateResult> HandleAuthenticateAsync()
             {
-                var claims = new[]
+                var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.NameIdentifier, "integration-test-user"),
-                    new Claim(ClaimTypes.Name, "integration-test-user"),
+                    new(ClaimTypes.NameIdentifier, "integration-test-user"),
+                    new(ClaimTypes.Name, "integration-test-user"),
                 };
+
+                if (settings.Email is not null)
+                    claims.Add(new Claim(ClaimTypes.Email, settings.Email));
 
                 var identity = new ClaimsIdentity(claims, Scheme.Name);
                 var principal = new ClaimsPrincipal(identity);
@@ -114,4 +130,6 @@ public class ApiFactory : WebApplicationFactory<Program>
             }
         }
     }
+
+    protected sealed record TestAuthSettings(string? Email);
 }

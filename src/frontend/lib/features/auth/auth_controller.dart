@@ -3,20 +3,17 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:onlyshrooms/data/auth/auth_repository.dart';
-import 'package:onlyshrooms/data/auth/keycloak_auth_repository.dart';
-import 'package:onlyshrooms/data/auth/keycloak_manager.dart';
 import 'package:onlyshrooms/core/api_client.dart';
+import 'package:onlyshrooms/data/auth/google_auth_repository.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return KeycloakAuthRepository(keycloakManager, createApiClient());
+  return GoogleAuthRepository(createApiClient());
 });
 
-final authControllerProvider =
-    ChangeNotifierProvider<AuthController>((ref) {
+final authControllerProvider = ChangeNotifierProvider<AuthController>((ref) {
   final controller = AuthController(ref.watch(authRepositoryProvider));
   unawaited(controller.init());
-  ref.onDispose(controller.dispose);
   return controller;
 });
 
@@ -49,6 +46,11 @@ class AuthController extends ChangeNotifier {
       _busy = false;
       notifyListeners();
     }
+  }
+
+  Future<void> completeGoogleLogin(String token, {String? email}) async {
+    await _auth.completeGoogleLogin(token, email: email);
+    notifyListeners();
   }
 
   Future<void> signOut() async {

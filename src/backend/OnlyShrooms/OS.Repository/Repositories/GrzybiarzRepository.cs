@@ -9,31 +9,18 @@ namespace OS.Repository.Repositories;
 internal sealed class GrzybiarzRepository(OsDbContext context)
     : IGrzybiarzRepository
 {
-    public async Task<Grzybiarz> GetOrCreateAsync(
+    public async Task<Grzybiarz> AddAsync(
         Grzybiarz grzybiarz,
         CancellationToken cancellationToken = default)
     {
-        var existing = await context.Grzybiarze
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                user => user.KeycloakId == grzybiarz.KeycloakId,
-                cancellationToken);
-
-        if (existing is not null)
+        var existingGrzybiarz = await GetByEmailAsync(grzybiarz.Email, cancellationToken);
+        if (existingGrzybiarz is not null)
         {
-            return GrzybiarzMapper.ToModel(existing);
+            return existingGrzybiarz;
         }
 
-        var entity = new GrzybiarzEntity
-        {
-            KeycloakId = grzybiarz.KeycloakId,
-            Email = grzybiarz.Email,
-            Imie = grzybiarz.Imie,
-            Nazwisko = grzybiarz.Nazwisko,
-        };
-
+        var entity = GrzybiarzMapper.ToNewEntity(grzybiarz);
         context.Grzybiarze.Add(entity);
-
         try
         {
             await context.SaveChangesAsync(cancellationToken);
@@ -46,7 +33,7 @@ internal sealed class GrzybiarzRepository(OsDbContext context)
             var createdByConcurrentRequest = await context.Grzybiarze
                 .AsNoTracking()
                 .SingleOrDefaultAsync(
-                    user => user.KeycloakId == grzybiarz.KeycloakId,
+                    user => user.Email == grzybiarz.Email,
                     cancellationToken);
 
             if (createdByConcurrentRequest is null)
@@ -56,5 +43,18 @@ internal sealed class GrzybiarzRepository(OsDbContext context)
 
             return GrzybiarzMapper.ToModel(createdByConcurrentRequest);
         }
+
+    }
+    public async Task<Grzybiarz?> GetByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await context.Grzybiarze
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                user => user.Email == email,
+                cancellationToken);
+        return result is null ? null : GrzybiarzMapper.ToModel(result);
+
     }
 }

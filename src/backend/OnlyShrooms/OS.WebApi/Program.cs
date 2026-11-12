@@ -5,6 +5,7 @@ using OS.Services.DependencyInjection;
 using OS.WebApi.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using OS.WebApi.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,34 +32,46 @@ builder.Host.UseDefaultServiceProvider(options =>
     options.ValidateScopes = true;
     options.ValidateOnBuild = true;
 });
-var keycloakIssuer =
-    builder.Configuration["Authentication:Keycloak:Issuer"]
-    ?? "http://localhost:8081/realms/onlyshrooms";
-
-var keycloakMetadataAddress =
-    builder.Configuration["Authentication:Keycloak:MetadataAddress"]
-    ?? "http://keycloak:8080/realms/onlyshrooms/.well-known/openid-configuration";
-
-var keycloakAudience =
-    builder.Configuration["Authentication:Keycloak:Audience"]
-    ?? "onlyshrooms-api";
-
+var jwtSigningKey = new SymmetricSecurityKey(
+    System.Text.Encoding.UTF8.GetBytes(
+        builder.Configuration["Jwt:Secret"]
+        ?? throw new InvalidOperationException("Jwt:Secret is not configured.")));
+builder.Services.AddSingleton(jwtSigningKey);
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddAuthentication(options =>
     {
-        options.MetadataAddress = keycloakMetadataAddress;
-        options.RequireHttpsMetadata = false; // Local HTTP development only.
-        options.MapInboundClaims = false;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = GoogleCookie.Scheme;
+    })
+    .AddCookie(GoogleCookie.Scheme, options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+        options.SlidingExpiration = false;
+    })
+    .AddGoogle("Google", options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]
+                                ?? throw new InvalidOperationException("Google:ClientId is not configured.");
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]
+                                ?? throw new InvalidOperationException("Google:ClientSecret is not configured.");
+        options.SignInScheme = GoogleCookie.Scheme;
+        options.CallbackPath = new PathString("/signin-google");
+    })
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = keycloakIssuer,
             ValidateAudience = true,
-            ValidAudience = keycloakAudience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ClockSkew = TimeSpan.FromMinutes(1),
+            ValidIssuer = "OnlyShrooms.Api",
+            ValidAudience = "OnlyShrooms.Api",
+            IssuerSigningKey = jwtSigningKey
         };
     });
 
@@ -74,7 +87,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

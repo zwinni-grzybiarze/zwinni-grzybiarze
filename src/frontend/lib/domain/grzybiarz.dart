@@ -14,7 +14,12 @@ class Grzybiarz {
   final String? email;
   final Map<String, dynamic> fields;
 
-  String get displayName => '$imie $nazwisko'.trim();
+  String get displayName {
+    final name = '$imie $nazwisko'.trim();
+    if (name.isNotEmpty) return name;
+    if (email != null && email!.isNotEmpty) return email!;
+    return 'Grzybiarz';
+  }
 
   factory Grzybiarz.fromJson(Map<String, dynamic> json) {
     final id = (json['grzybiarzId'] ?? json['id']).toString();

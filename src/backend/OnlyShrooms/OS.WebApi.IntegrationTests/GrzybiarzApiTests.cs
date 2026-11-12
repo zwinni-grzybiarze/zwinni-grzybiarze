@@ -1,6 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace OS.WebApi.IntegrationTests;
 
@@ -22,53 +20,49 @@ public sealed class GrzybiarzApiTests
     [TestCleanup]
     public void Cleanup() => _client.Dispose();
 
-    private static object ValidRequest(
-        string keycloakId = "user-123",
-        string email = "jan.kowalski@example.com",
-        string imie = "Jan",
-        string nazwisko = "Kowalski") => new
-    {
-        keycloakId,
-        email,
-        imie,
-        nazwisko,
-    };
 
     [TestMethod]
-    public async Task Post_WithValidAuthentication_ReturnsCreatedUser()
+    public async Task GetByEmail_UnknownEmail_Returns404()
     {
-        using var authenticatedClient = _factory.CreateAuthenticatedClient();
+        var response = await _client.GetAsync("/api/grzybiarze/nieistnieje@example.com");
 
-        var response = await authenticatedClient.PostAsJsonAsync("/api/auth/me", ValidRequest("auth-user-1"));
-
-        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.AreEqual("auth-user-1", body.GetProperty("keycloakId").GetString());
-        Assert.AreEqual("jan.kowalski@example.com", body.GetProperty("email").GetString());
-        Assert.AreEqual("Jan", body.GetProperty("imie").GetString());
-        Assert.AreEqual("Kowalski", body.GetProperty("nazwisko").GetString());
-        Assert.IsTrue(body.TryGetProperty("grzybiarzId", out var grzybiarzId));
-        Assert.AreEqual(JsonValueKind.Number, grzybiarzId.ValueKind);
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [TestMethod]
-    public async Task Post_WithoutAuthentication_Returns401()
+    public async Task GetByEmail_NoAuthHeader_IsPublic_DoesNotReturn401Or403()
     {
-        var response = await _client.PostAsJsonAsync("/api/auth/me", ValidRequest());
+        var response = await _client.GetAsync("/api/grzybiarze/ktos@example.com");
+
+        Assert.AreNotEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.AreNotEqual(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+
+    [TestMethod]
+    public async Task GetMe_Unauthenticated_Returns401()
+    {
+        var response = await _client.GetAsync("/api/grzybiarze/me");
 
         Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [TestMethod]
-    public async Task Post_MissingRequiredFieldsWithoutAuthentication_Returns401()
+    public async Task GetMe_Authenticated_UserNotInDatabase_Returns404()
     {
-        var response = await _client.PostAsJsonAsync("/api/auth/me", new
-        {
-            email = "jan.kowalski@example.com",
-            imie = "Jan",
-            nazwisko = "Kowalski",
-        });
+        using var authClient = _factory.CreateAuthenticatedClient("nieznany@example.com");
+
+        var response = await authClient.GetAsync("/api/grzybiarze/me");
+
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task GetMe_AuthenticatedButNoEmailClaim_Returns401()
+    {
+        using var authClient = _factory.CreateAuthenticatedClient(email: null);
+
+        var response = await authClient.GetAsync("/api/grzybiarze/me");
 
         Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
     }

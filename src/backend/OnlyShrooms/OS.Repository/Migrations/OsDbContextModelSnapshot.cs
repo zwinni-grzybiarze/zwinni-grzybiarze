@@ -24,6 +24,7 @@ namespace OS.Repository.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
@@ -32,19 +33,12 @@ namespace OS.Repository.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("KeycloakId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Nazwisko")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("KeycloakId")
-                        .IsUnique();
 
                     b.ToTable("Grzybiarze", (string)null);
                 });

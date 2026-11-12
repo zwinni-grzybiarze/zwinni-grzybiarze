@@ -4,6 +4,6 @@ namespace OS.Interfaces.Repositories;
 
 public interface IGrzybiarzRepository
 {
-    Task<Grzybiarz> GetOrCreateAsync(Grzybiarz grzybiarz,
-        CancellationToken cancellationToken = default);
+    Task<Grzybiarz?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<Grzybiarz> AddAsync(Grzybiarz grzybiarz, CancellationToken cancellationToken = default);
 }

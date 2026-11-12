@@ -16,6 +16,7 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="Riok.Mapperly" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
   </ItemGroup>
 
   <ItemGroup>

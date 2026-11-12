@@ -65,7 +65,6 @@ class LoginPage extends ConsumerWidget {
                               await ref
                                   .read(authControllerProvider.notifier)
                                   .signInWithGoogle();
-                              if (context.mounted) context.go('/');
                             },
                       icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
                       label: const Padding(

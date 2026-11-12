@@ -32,10 +32,9 @@ public class GrzybiarzRepositoryTests
         await _connection.DisposeAsync();
     }
 
-    private static Grzybiarz Create(string keycloakId = "test-user") => new()
+    private static Grzybiarz Create() => new()
     {
-        KeycloakId = keycloakId,
-        Email = "",
+        Email = "newEmail@com.com",
         Imie = "Amadeusz",
         Nazwisko = "Mozart",
     };
@@ -45,30 +44,12 @@ public class GrzybiarzRepositoryTests
     {
         var grzybiarz = Create();
 
-        var addedGrzybiarz = await _repository.GetOrCreateAsync(grzybiarz);
+        var addedGrzybiarz = await _repository.AddAsync(grzybiarz);
 
         Assert.IsNotNull(addedGrzybiarz);
-        Assert.AreEqual(grzybiarz.Id, addedGrzybiarz.Id);
-        Assert.AreEqual(grzybiarz.KeycloakId, addedGrzybiarz.KeycloakId);
         Assert.AreEqual(grzybiarz.Imie, addedGrzybiarz.Imie);
         Assert.AreEqual(grzybiarz.Nazwisko, addedGrzybiarz.Nazwisko);
         Assert.AreEqual(grzybiarz.Email, addedGrzybiarz.Email);
-    }
-
-    [TestMethod]
-    public async Task GetOrCreate_DuplicateKeycloakId_ReturnsExistingEntity()
-    {
-        var grzybiarz = Create();
-
-        var addedGrzybiarz = await _repository.GetOrCreateAsync(grzybiarz);
-        var duplicateGrzybiarz = await _repository.GetOrCreateAsync(grzybiarz);
-
-        Assert.IsNotNull(duplicateGrzybiarz);
-        Assert.AreEqual(addedGrzybiarz.Id, duplicateGrzybiarz.Id);
-        Assert.AreEqual(addedGrzybiarz.KeycloakId, duplicateGrzybiarz.KeycloakId);
-        Assert.AreEqual(addedGrzybiarz.Imie, duplicateGrzybiarz.Imie);
-        Assert.AreEqual(addedGrzybiarz.Nazwisko, duplicateGrzybiarz.Nazwisko);
-        Assert.AreEqual(addedGrzybiarz.Email, duplicateGrzybiarz.Email);
     }
 
     [TestMethod]
@@ -76,21 +57,27 @@ public class GrzybiarzRepositoryTests
     {
         var grzybiarz = Create();
 
-        var addedGrzybiarz = await _repository.GetOrCreateAsync(grzybiarz);
-        grzybiarz.Imie = "Jan";
-        var duplicateGrzybiarz = await _repository.GetOrCreateAsync(grzybiarz);
+        var addedGrzybiarz = await _repository.AddAsync(grzybiarz)
+                             ?? throw new AssertFailedException("Expected grzybiarz to exist.");
+        var duplicate = new Grzybiarz
+        {
+            Email = addedGrzybiarz.Email,
+            Imie = "Andrzej",
+            Nazwisko = "Mozart"
+        };
+        var result = await _repository.GetByEmailAsync(duplicate.Email);
 
-        Assert.IsNotNull(duplicateGrzybiarz);
-        Assert.AreEqual(addedGrzybiarz.Id, duplicateGrzybiarz.Id);
-        Assert.AreNotEqual(duplicateGrzybiarz.Imie, grzybiarz.Imie);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(result.Email, addedGrzybiarz.Email);
+        Assert.AreEqual(result.Id, addedGrzybiarz.Id);
+        Assert.AreEqual(result.Imie, addedGrzybiarz.Imie);
     }
 
     [TestMethod]
     public async Task GetOrCreate_ConcurrentWrite_WriteNewerEntity()
     {
-        var keycloakId = "test-user";
-        var first = Create(keycloakId);
-        var second = Create(keycloakId);
+        var first = Create();
+        var second = Create();
 
         second.Imie = "Jan";
 
@@ -99,11 +86,14 @@ public class GrzybiarzRepositoryTests
         var repository2 = new GrzybiarzRepository(new OsDbContext(options));
 
         var results = await Task.WhenAll(
-repository1.GetOrCreateAsync(first),
-            repository2.GetOrCreateAsync(second)
+            repository1.AddAsync(first),
+            repository2.AddAsync(second)
         );
-        Assert.AreEqual(1, await _context.Grzybiarze.CountAsync(x => x.KeycloakId == keycloakId));
-        Assert.AreEqual(results[0].Id, results[1].Id);
-        Assert.AreEqual(results[0].Imie, results[1].Imie);
+        var firstResult = results[0] ?? throw new AssertFailedException("First result is null.");
+        var secondResult = results[1] ?? throw new AssertFailedException("Second result is null.");
+
+        Assert.AreEqual(1, await _context.Grzybiarze.CountAsync());
+        Assert.AreEqual(firstResult.Id, secondResult.Id);
+        Assert.AreEqual(firstResult.Imie, secondResult.Imie);
     }
 }

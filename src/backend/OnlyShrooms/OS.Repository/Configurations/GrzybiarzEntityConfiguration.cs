@@ -12,9 +12,8 @@ public class GrzybiarzEntityConfiguration : IEntityTypeConfiguration<GrzybiarzEn
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
-        builder.Property(e => e.KeycloakId).IsRequired();
-        builder.HasIndex(e => e.KeycloakId).IsUnique();
         builder.Property(e => e.Email).HasMaxLength(200);
+        builder.Property(e => e.Email).IsRequired();
         builder.Property(e => e.Imie).IsRequired().HasMaxLength(100);
         builder.Property(e => e.Nazwisko).IsRequired().HasMaxLength(100);
     }

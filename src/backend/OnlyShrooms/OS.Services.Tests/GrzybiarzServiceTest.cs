@@ -25,16 +25,4 @@ public class GrzybiarzServiceTest
         _repository = null!;
     }
 
-    [TestMethod]
-    public void GetOrCreate_NullKeycloakId_ThrowsArgumentException()
-    {
-        var grzybiarz = new Grzybiarz
-        {
-            KeycloakId = null!
-        };
-
-        Assert.ThrowsAsync<ArgumentException>(() =>
-            _service.GetOrCreateAsync(grzybiarz)
-        );
-    }
 }
