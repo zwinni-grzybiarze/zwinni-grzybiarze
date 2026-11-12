@@ -47,7 +47,7 @@ class _ZadaniaListPageState extends ConsumerState<ZadaniaListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OnlyShrooms - quests'),
+        title: const Text('OnlyShrooms - zadania'),
         actions: [
           if (auth.user != null && !compact)
             Padding(

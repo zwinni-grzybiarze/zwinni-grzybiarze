@@ -24,7 +24,7 @@ class _ZadanieDetailPageState
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(zadaniaControllerProvider.notifier)
