@@ -91,6 +91,8 @@ class _ZadanieEditPageState extends ConsumerState<ZadanieEditPage> {
   }
 
   Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    
     setState(() => _saving = true);
     final item = Zadanie(
       id: _existingId ?? 'new',
