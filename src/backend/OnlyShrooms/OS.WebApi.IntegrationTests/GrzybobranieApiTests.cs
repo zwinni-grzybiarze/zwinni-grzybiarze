@@ -58,6 +58,36 @@ public sealed class GrzybobranieApiTests
     }
 
     [TestMethod]
+    public async Task Cors_PreflightAllowsLocalFrontendWithJsonAndAuthorizationHeaders()
+    {
+        const string origin = "http://localhost:58962";
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/api/grzybobrania");
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("Access-Control-Request-Method", "POST");
+        request.Headers.Add("Access-Control-Request-Headers", "authorization,content-type");
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.IsTrue(response.Headers.TryGetValues("Access-Control-Allow-Origin", out var origins));
+        Assert.AreEqual(origin, origins!.Single());
+        Assert.IsTrue(response.Headers.TryGetValues("Access-Control-Allow-Headers", out var headers));
+        StringAssert.Contains(string.Join(",", headers!), "authorization");
+        StringAssert.Contains(string.Join(",", headers!), "content-type");
+    }
+
+    [TestMethod]
+    public async Task Cors_PreflightDoesNotAllowNonLocalOrigin()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/api/grzybobrania");
+        request.Headers.Add("Origin", "https://example.com");
+        request.Headers.Add("Access-Control-Request-Method", "POST");
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.IsFalse(response.Headers.Contains("Access-Control-Allow-Origin"));
+    }
+
+    [TestMethod]
     public async Task Get_ReturnsCreatedItem()
     {
         var created = await CreateAsync();

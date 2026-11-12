@@ -43,14 +43,14 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
           Zadanie(
             id: 't1',
             grzybobranieId: '1',
-            tytul: 'Zabrać kosze i noże',
+            nazwa: 'Zabrać kosze i noże',
             opis: 'Po jednym zestawie na osobę',
             kolejnosc: 1,
           ),
           Zadanie(
             id: 't2',
             grzybobranieId: '1',
-            tytul: 'Sprawdzić pogodę',
+            nazwa: 'Sprawdzić pogodę',
             opis: null,
             kolejnosc: 2,
           ),
@@ -97,7 +97,7 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
           Zadanie(
             id: 't3',
             grzybobranieId: '4',
-            tytul: 'Podsumowanie zbiorów',
+            nazwa: 'Podsumowanie zbiorów',
             opis: 'Wpisać wagę i gatunki',
             kolejnosc: 1,
           ),
@@ -185,7 +185,7 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
     final created = Zadanie(
       id: 't${_nextTaskId++}',
       grzybobranieId: grzybobranieId,
-      tytul: zadanie.tytul,
+      nazwa: zadanie.nazwa,
       opis: zadanie.opis,
       kolejnosc: zadanie.kolejnosc ?? g.zadania.length + 1,
       fields: zadanie.fields,
