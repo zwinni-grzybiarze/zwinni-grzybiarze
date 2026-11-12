@@ -15,6 +15,14 @@ class OnlyShroomsApp extends ConsumerWidget {
       theme: OnlyShroomsTheme.light(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/images/app_background.png', fit: BoxFit.cover),
+          const ColoredBox(color: Color(0x66000000)),
+          ?child,
+        ],
+      ),
     );
   }
 }

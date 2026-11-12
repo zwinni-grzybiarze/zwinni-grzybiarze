@@ -3,6 +3,21 @@ import 'package:onlyshrooms/domain/grzybiarz.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 
 void main() {
+  test('Zadanie can be saved with or without a grzybobranie', () {
+    const unlinked = Zadanie(id: 'new', nazwa: 'Nowe zadanie');
+    expect(unlinked.grzybobranieId, isNull);
+    expect(unlinked.toJson().containsKey('grzybobranieId'), isFalse);
+
+    const linked = Zadanie(
+      id: 'new',
+      grzybobranieId: '12',
+      nazwa: 'Połączone zadanie',
+    );
+    final json = linked.toJson();
+    expect(json['grzybobranieId'], 12);
+    expect(Zadanie.fromJson(json).grzybobranieId, '12');
+  });
+
   test('Zadanie.fromJson reads tytul and grzybobranieId', () {
     final byTytul = Zadanie.fromJson({
       'zadanieId': 1,

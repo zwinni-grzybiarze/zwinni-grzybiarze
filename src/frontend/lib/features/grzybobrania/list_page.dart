@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:onlyshrooms/app_theme.dart';
 import 'package:onlyshrooms/core/responsive.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/status.dart';
-import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/grzybobrania/grzybobrania_controller.dart';
 
 class GrzybobraniaListPage extends ConsumerStatefulWidget {
@@ -40,35 +40,12 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
     final ctrl = ref.watch(grzybobraniaControllerProvider);
     final page = ctrl.page;
     final compact = context.isCompact;
+    const filterChipBackground = OnlyShroomsTheme.inactiveFilterBackground;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('OnlyShrooms'),
-        actions: [
-          if (auth.user != null && !compact)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Center(
-                child: Text(
-                  auth.user!.displayName,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-            ),
-          IconButton(
-            tooltip: 'Wyloguj',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) context.go('/login');
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
       floatingActionButton: compact
           ? FloatingActionButton(
               onPressed: () => context.go('/grzybobrania/new'),
@@ -84,12 +61,28 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Grzybobrania',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: compact ? 22 : null,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: filterChipBackground,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
+                  child: Text(
+                    'Grzybobrania',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: compact ? 22 : null,
+                      color: OnlyShroomsTheme.bark,
+                    ),
+                  ),
+                ),
+              ),
             ),
             SizedBox(height: compact ? 10 : 12),
             if (compact) ...[
@@ -180,24 +173,36 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
                   Text(
                     'Strona ${page.number + 1} / ${page.totalPages} '
                     '(${page.totalElements})',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: OnlyShroomsTheme.cream,
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
+                        style: IconButton.styleFrom(
+                          foregroundColor: OnlyShroomsTheme.cream,
+                          disabledForegroundColor: OnlyShroomsTheme.cream
+                              .withValues(alpha: 0.5),
+                        ),
                         onPressed: page.hasPrevious
                             ? () => ref
-                                .read(grzybobraniaControllerProvider.notifier)
-                                .loadList(page: page.number - 1)
+                                  .read(grzybobraniaControllerProvider.notifier)
+                                  .loadList(page: page.number - 1)
                             : null,
                         icon: const Icon(Icons.chevron_left),
                       ),
                       IconButton(
+                        style: IconButton.styleFrom(
+                          foregroundColor: OnlyShroomsTheme.cream,
+                          disabledForegroundColor: OnlyShroomsTheme.cream
+                              .withValues(alpha: 0.5),
+                        ),
                         onPressed: page.hasNext
                             ? () => ref
-                                .read(grzybobraniaControllerProvider.notifier)
-                                .loadList(page: page.number + 1)
+                                  .read(grzybobraniaControllerProvider.notifier)
+                                  .loadList(page: page.number + 1)
                             : null,
                         icon: const Icon(Icons.chevron_right),
                       ),
@@ -235,6 +240,7 @@ class _StatusFilterChips extends StatelessWidget {
         ),
         selected: isOn,
         visualDensity: VisualDensity.compact,
+        backgroundColor: OnlyShroomsTheme.inactiveFilterBackground,
         onSelected: (_) => onToggle(status),
       );
     }).toList();

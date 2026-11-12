@@ -51,6 +51,60 @@ public sealed class ZadanieApiTests
     }
 
     [TestMethod]
+    public async Task Post_CreatesWithoutGrzybobranie()
+    {
+        var created = await CreateAsync();
+
+        Assert.AreEqual(
+            JsonValueKind.Null,
+            created.GetProperty("grzybobranieId").ValueKind);
+    }
+
+    [TestMethod]
+    public async Task Post_CreatesWithExistingGrzybobranie_AndCanUnlink()
+    {
+        var grzybobranieResponse = await _client.PostAsJsonAsync(
+            "/api/grzybobrania",
+            new
+            {
+                nazwa = "Wyprawa",
+                lokalizacja = "Las",
+                dataOd = "2026-09-01T08:00:00Z",
+                dataDo = "2026-09-01T16:00:00Z",
+                status = "PLANOWANE",
+            });
+        Assert.AreEqual(HttpStatusCode.Created, grzybobranieResponse.StatusCode);
+        var grzybobranie = await grzybobranieResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var grzybobranieId = grzybobranie.GetProperty("grzybobranieId").GetInt32();
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/zadania",
+            new
+            {
+                nazwa = "Zabrać kosz",
+                grzybobranieId,
+                status = "OTWARTE",
+            });
+
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.AreEqual(
+            grzybobranieId,
+            created.GetProperty("grzybobranieId").GetInt32());
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/zadania/{created.GetProperty("zadanieId").GetInt32()}",
+            new
+            {
+                nazwa = "Zabrać kosz",
+                status = "OTWARTE",
+            });
+        Assert.AreEqual(HttpStatusCode.OK, update.StatusCode);
+        var updated = await update.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.AreEqual(JsonValueKind.Null, updated.GetProperty("grzybobranieId").ValueKind);
+    }
+
+    [TestMethod]
     public async Task Get_ReturnsCreatedItem()
     {
         var created = await CreateAsync();
