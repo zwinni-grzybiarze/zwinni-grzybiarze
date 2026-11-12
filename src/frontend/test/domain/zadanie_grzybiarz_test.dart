@@ -3,20 +3,35 @@ import 'package:onlyshrooms/domain/grzybiarz.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 
 void main() {
-  test('Zadanie.fromJson reads tytul and grzybobranieId', () {
-    final byTytul = Zadanie.fromJson({
+  test('Zadanie can be saved with or without a grzybobranie', () {
+    const unlinked = Zadanie(id: 'new', nazwa: 'Nowe zadanie');
+    expect(unlinked.grzybobranieId, isNull);
+    expect(unlinked.toJson().containsKey('grzybobranieId'), isFalse);
+
+    const linked = Zadanie(
+      id: 'new',
+      grzybobranieId: '12',
+      nazwa: 'Połączone zadanie',
+    );
+    final json = linked.toJson();
+    expect(json['grzybobranieId'], 12);
+    expect(Zadanie.fromJson(json).grzybobranieId, '12');
+  });
+
+  test('Zadanie.fromJson reads nazwa and grzybobranieId', () {
+    final byNazwa = Zadanie.fromJson({
       'zadanieId': 1,
-      'tytul': 'A',
+      'nazwa': 'A',
       'grzybobranieId': 2,
     });
     final nested = Zadanie.fromJson({
       'id': 'x',
-      'tytul': 'B',
+      'nazwa': 'B',
       'grzybobranie': {'grzybobranieId': 3},
     });
 
-    expect(byTytul.nazwa, 'A');
-    expect(byTytul.grzybobranieId, '2');
+    expect(byNazwa.nazwa, 'A');
+    expect(byNazwa.grzybobranieId, '2');
     expect(nested.nazwa, 'B');
     expect(nested.grzybobranieId, '3');
   });

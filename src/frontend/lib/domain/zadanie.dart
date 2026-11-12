@@ -5,7 +5,7 @@ import 'package:onlyshrooms/domain/grzybiarz.dart';
 class Zadanie {
   const Zadanie({
     required this.id,
-    required this.grzybobranieId,
+    this.grzybobranieId,
     required this.nazwa,
     this.opis,
     this.kolejnosc,
@@ -14,7 +14,7 @@ class Zadanie {
   });
 
   final String id;
-  final String grzybobranieId;
+  final String? grzybobranieId;
   final String nazwa;
   final String? opis;
   final int? kolejnosc;
@@ -24,10 +24,11 @@ class Zadanie {
   factory Zadanie.fromJson(Map<String, dynamic> json) {
     final id = (json['zadanieId'] ?? json['id']).toString();
 
-    final parent = json['grzybobranieId'] ??
+    final parent =
+        json['grzybobranieId'] ??
         (json['grzybobranie'] is Map
             ? (json['grzybobranie'] as Map)['grzybobranieId'] ??
-                (json['grzybobranie'] as Map)['id']
+                  (json['grzybobranie'] as Map)['id']
             : null);
 
     final rest = Map<String, dynamic>.from(json)
@@ -42,13 +43,17 @@ class Zadanie {
 
     return Zadanie(
       id: id,
-      grzybobranieId: parent?.toString() ?? '',
+      grzybobranieId: parent == null || parent.toString().isEmpty
+          ? null
+          : parent.toString(),
       nazwa: (json['nazwa'] as String?) ?? '',
       opis: json['opis'] as String?,
       kolejnosc: (json['kolejnosc'] as num?)?.toInt(),
-      czlonkowie: (json['czlonkowie'] as List?)
-              ?.map((e) => Grzybiarz.fromJson(
-                  Map<String, dynamic>.from(e as Map)))
+      czlonkowie:
+          (json['czlonkowie'] as List?)
+              ?.map(
+                (e) => Grzybiarz.fromJson(Map<String, dynamic>.from(e as Map)),
+              )
               .toList() ??
           const [],
       fields: rest,
@@ -56,15 +61,16 @@ class Zadanie {
   }
 
   Map<String, dynamic> toJson() => {
-        'zadanieId': id,
-        'grzybobranieId': grzybobranieId,
-        'nazwa': nazwa,
-        if (opis != null) 'opis': opis,
-        if (kolejnosc != null) 'kolejnosc': kolejnosc,
-        if (czlonkowie.isNotEmpty)
-          'czlonkowie': czlonkowie.map((e) => e.toJson()).toList(),
-        ...fields,
-      };
+    'zadanieId': id,
+    if (grzybobranieId != null && grzybobranieId!.isNotEmpty)
+      'grzybobranieId': int.tryParse(grzybobranieId!) ?? grzybobranieId,
+    'nazwa': nazwa,
+    if (opis != null) 'opis': opis,
+    if (kolejnosc != null) 'kolejnosc': kolejnosc,
+    if (czlonkowie.isNotEmpty)
+      'czlonkowie': czlonkowie.map((e) => e.toJson()).toList(),
+    ...fields,
+  };
 
   ZadanieStatus? get status =>
       ZadanieStatus.tryParse(getField<String>('status'));

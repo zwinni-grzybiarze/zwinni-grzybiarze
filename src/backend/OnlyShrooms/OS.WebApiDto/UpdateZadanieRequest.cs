@@ -11,6 +11,8 @@ public class UpdateZadanieRequest
     [StringLength(10000)]
     public string? Opis { get; set; }
 
+    public int? GrzybobranieId { get; set; }
+
     [Required]
     public ZadanieStatusDto? Status { get; set; }
 }
