@@ -37,7 +37,6 @@ class Zadanie {
       ..remove('grzybobranieId')
       ..remove('grzybobranie')
       ..remove('nazwa')
-      ..remove('tytul')
       ..remove('opis')
       ..remove('kolejnosc')
       ..remove('czlonkowie');
@@ -47,7 +46,7 @@ class Zadanie {
       grzybobranieId: parent == null || parent.toString().isEmpty
           ? null
           : parent.toString(),
-      nazwa: (json['nazwa'] as String?) ?? (json['tytul'] as String?) ?? '',
+      nazwa: (json['nazwa'] as String?) ?? '',
       opis: json['opis'] as String?,
       kolejnosc: (json['kolejnosc'] as num?)?.toInt(),
       czlonkowie:
