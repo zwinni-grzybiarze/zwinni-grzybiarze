@@ -34,7 +34,7 @@ void main() {
     () {
       final legacy = Zadanie.fromJson({
         'id': 'legacy',
-        'tytul': 'Stare zadanie',
+        'nazwa': 'Stare zadanie',
         'grzybobranie': {'id': 8},
       });
       final unlinked = Zadanie.fromJson({
