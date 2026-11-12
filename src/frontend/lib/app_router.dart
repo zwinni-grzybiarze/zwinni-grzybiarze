@@ -6,6 +6,9 @@ import 'package:onlyshrooms/features/auth/login_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/detail_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/edit_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/list_page.dart';
+import 'package:onlyshrooms/features/zadania/detail_page.dart';
+import 'package:onlyshrooms/features/zadania/edit_page.dart';
+import 'package:onlyshrooms/features/zadania/list_page.dart';
 
 /// Created once; auth changes refresh redirects via [refreshListenable].
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -45,6 +48,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/grzybobrania/:id/edit',
         builder: (context, state) =>
             GrzybobranieEditPage(id: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/zadania',
+        builder: (context, state) => const ZadaniaListPage(),
+      ),
+      GoRoute(
+        path: '/zadania/new',
+        builder: (context, state) => const ZadanieEditPage(),
+      ),
+      GoRoute(
+        path: '/zadania/:id',
+        builder: (context, state) =>
+            ZadanieDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/zadania/:id/edit',
+        builder: (context, state) =>
+            ZadanieEditPage(id: state.pathParameters['id']),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -89,17 +89,17 @@ void main() {
       const Zadanie(
         id: 'new',
         grzybobranieId: parentId,
-        tytul: 'Test task',
+        nazwa: 'Test task',
         opis: 'desc',
       ),
     );
     expect(task.id, isNot('new'));
-    expect(task.tytul, 'Test task');
+    expect(task.nazwa, 'Test task');
 
     final renamed = await repo.updateZadanie(
-      task.copyWith(tytul: 'Renamed'),
+      task.copyWith(nazwa: 'Renamed'),
     );
-    expect(renamed.tytul, 'Renamed');
+    expect(renamed.nazwa, 'Renamed');
 
     final member = Grzybiarz(
       id: 'u-test',

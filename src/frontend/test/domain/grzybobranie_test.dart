@@ -34,7 +34,7 @@ void main() {
       expect(g.status, GrzybobranieStatus.wToku);
       expect(g.getField<String>('futureField'), 'keep-me');
       expect(g.zadania, hasLength(1));
-      expect(g.zadania.first.tytul, 'Kosze');
+      expect(g.zadania.first.nazwa, 'Kosze');
       expect(g.czlonkowie.first.displayName, 'A B');
     });
 

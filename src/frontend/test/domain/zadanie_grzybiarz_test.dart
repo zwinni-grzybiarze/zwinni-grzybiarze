@@ -15,9 +15,9 @@ void main() {
       'grzybobranie': {'grzybobranieId': 3},
     });
 
-    expect(byTytul.tytul, 'A');
+    expect(byTytul.nazwa, 'A');
     expect(byTytul.grzybobranieId, '2');
-    expect(nested.tytul, 'B');
+    expect(nested.nazwa, 'B');
     expect(nested.grzybobranieId, '3');
   });
 

@@ -16,6 +16,17 @@ builder.Services
     });
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ValidationFailedExceptionHandler>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("LocalFrontend", policy =>
+        policy
+            .SetIsOriginAllowed(origin =>
+                Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                && uri.IsLoopback)
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddOsServices();
@@ -65,6 +76,7 @@ app.UseStaticFiles(new StaticFileOptions
     },
 });
 
+app.UseCors("LocalFrontend");
 app.UseAuthorization();
 
 app.MapControllers();
