@@ -43,6 +43,7 @@ internal sealed class ZadanieService(IZadanieRepository repository) : IZadanieSe
             Id = source.Id,
             Nazwa = nazwa,
             Opis = string.IsNullOrEmpty(opis) ? null : opis,
+            GrzybobranieId = source.GrzybobranieId,
             Status = source.Status,
         };
     }

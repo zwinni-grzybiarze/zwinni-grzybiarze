@@ -197,7 +197,11 @@ class MockGrzybobranieRepository implements GrzybobranieRepository {
 
   @override
   Future<Zadanie> updateZadanie(Zadanie zadanie) async {
-    final g = _require(zadanie.grzybobranieId);
+    final grzybobranieId = zadanie.grzybobranieId;
+    if (grzybobranieId == null) {
+      throw StateError('Cannot update a zadanie without a grzybobranie');
+    }
+    final g = _require(grzybobranieId);
     final tasks = g.zadania.map((t) => t.id == zadanie.id ? zadanie : t).toList();
     await update(g.copyWith(zadania: tasks));
     return zadanie;

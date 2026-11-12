@@ -14,5 +14,10 @@ internal sealed class ZadanieEntityConfiguration : IEntityTypeConfiguration<Zada
         builder.Property(e => e.Nazwa).IsRequired().HasMaxLength(200);
         builder.Property(e => e.Opis);
         builder.Property(e => e.Status).HasConversion<string>().HasMaxLength(50);
+        builder
+            .HasOne<GrzybobranieEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.GrzybobranieId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
