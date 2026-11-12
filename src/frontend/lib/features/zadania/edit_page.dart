@@ -98,7 +98,8 @@ class _ZadanieEditPageState extends ConsumerState<ZadanieEditPage> {
       grzybobranieId: _grzybobranieSelection.isEmpty
           ? null
           : _grzybobranieSelection,
-      fields: {'opis': _opis.text.trim(), 'status': _status.apiValue},
+      opis: _opis.text.trim(),
+      fields: {'status': _status.apiValue},
     );
     try {
       final saved = await ref
