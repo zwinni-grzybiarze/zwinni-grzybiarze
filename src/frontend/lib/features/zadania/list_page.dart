@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/core/responsive.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
 import 'package:onlyshrooms/domain/status_zadania.dart';
-import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/zadania/zadania_controller.dart';
 
 class ZadaniaListPage extends ConsumerStatefulWidget {
@@ -40,7 +39,6 @@ class _ZadaniaListPageState extends ConsumerState<ZadaniaListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
     final ctrl = ref.watch(zadaniaControllerProvider);
     final page = ctrl.page;
     final compact = context.isCompact;
@@ -48,26 +46,6 @@ class _ZadaniaListPageState extends ConsumerState<ZadaniaListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('OnlyShrooms - zadania'),
-        actions: [
-          if (auth.user != null && !compact)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Center(
-                child: Text(
-                  auth.user!.displayName,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-            ),
-          IconButton(
-            tooltip: 'Wyloguj',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) context.go('/login');
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
       ),
       floatingActionButton: compact
           ? FloatingActionButton(

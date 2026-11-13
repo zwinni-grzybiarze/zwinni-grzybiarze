@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IGrzybobranieService, GrzybobranieService>();
         services.AddScoped<IZadanieService, ZadanieService>();
+        services.AddScoped<IChatService, ChatService>();
 
         return services;
     }

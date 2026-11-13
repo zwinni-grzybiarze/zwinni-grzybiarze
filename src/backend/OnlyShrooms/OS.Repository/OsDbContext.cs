@@ -9,6 +9,8 @@ internal sealed class OsDbContext(DbContextOptions<OsDbContext> options) : DbCon
 
     public DbSet<ZadanieEntity> Zadania => Set<ZadanieEntity>();
 
+    public DbSet<ChatMessageEntity> ChatMessages => Set<ChatMessageEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(OsDbContext).Assembly);
