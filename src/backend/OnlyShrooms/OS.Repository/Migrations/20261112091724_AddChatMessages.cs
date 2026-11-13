@@ -28,9 +28,9 @@ namespace OS.Repository.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_RoomId_SentAt",
+                name: "IX_ChatMessages_RoomId_SentAt_Id",
                 table: "ChatMessages",
-                columns: new[] { "RoomId", "SentAt" });
+                columns: new[] { "RoomId", "SentAt", "Id" });
         }
 
         /// <inheritdoc />

@@ -8,11 +8,13 @@ public interface IChatMessageRepository
 
     /// <summary>
     /// Returns up to <paramref name="limit"/> most recent messages in a room,
-    /// optionally older than <paramref name="before"/>, ordered ascending by SentAt.
+    /// optionally older than the (<paramref name="before"/>, <paramref name="beforeId"/>) cursor,
+    /// ordered ascending by SentAt then Id.
     /// </summary>
     Task<IReadOnlyList<ChatMessage>> GetHistoryAsync(
         string roomId,
         DateTime? before = null,
+        Guid? beforeId = null,
         int limit = ChatRooms.DefaultHistoryLimit,
         CancellationToken cancellationToken = default);
 }

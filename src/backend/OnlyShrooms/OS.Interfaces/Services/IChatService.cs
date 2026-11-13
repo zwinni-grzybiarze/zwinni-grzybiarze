@@ -14,6 +14,7 @@ public interface IChatService
     Task<IReadOnlyList<ChatMessage>> GetHistoryAsync(
         string roomId,
         DateTime? before = null,
+        Guid? beforeId = null,
         int limit = ChatRooms.DefaultHistoryLimit,
         CancellationToken cancellationToken = default);
 }

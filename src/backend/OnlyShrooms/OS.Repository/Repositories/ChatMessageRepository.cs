@@ -18,6 +18,7 @@ internal sealed class ChatMessageRepository(OsDbContext context) : IChatMessageR
     public async Task<IReadOnlyList<ChatMessage>> GetHistoryAsync(
         string roomId,
         DateTime? before = null,
+        Guid? beforeId = null,
         int limit = ChatRooms.DefaultHistoryLimit,
         CancellationToken cancellationToken = default)
     {
@@ -27,10 +28,18 @@ internal sealed class ChatMessageRepository(OsDbContext context) : IChatMessageR
 
         if (before.HasValue)
         {
-            var cursor = before.Value.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(before.Value, DateTimeKind.Utc)
-                : before.Value.ToUniversalTime();
-            query = query.Where(m => m.SentAt < cursor);
+            var cursor = ChatRooms.NormalizeUtc(before.Value);
+            if (beforeId.HasValue)
+            {
+                var cursorId = beforeId.Value;
+                query = query.Where(m =>
+                    m.SentAt < cursor
+                    || (m.SentAt == cursor && m.Id < cursorId));
+            }
+            else
+            {
+                query = query.Where(m => m.SentAt < cursor);
+            }
         }
 
         var entities = await query

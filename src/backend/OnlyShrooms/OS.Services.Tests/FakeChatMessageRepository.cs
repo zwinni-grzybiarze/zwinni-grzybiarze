@@ -16,13 +16,25 @@ internal sealed class FakeChatMessageRepository : IChatMessageRepository
     public Task<IReadOnlyList<ChatMessage>> GetHistoryAsync(
         string roomId,
         DateTime? before = null,
+        Guid? beforeId = null,
         int limit = ChatRooms.DefaultHistoryLimit,
         CancellationToken cancellationToken = default)
     {
         IEnumerable<ChatMessage> query = _items.Where(m => m.RoomId == roomId);
         if (before.HasValue)
         {
-            query = query.Where(m => m.SentAt < before.Value);
+            var cursor = ChatRooms.NormalizeUtc(before.Value);
+            if (beforeId.HasValue)
+            {
+                var cursorId = beforeId.Value;
+                query = query.Where(m =>
+                    m.SentAt < cursor
+                    || (m.SentAt == cursor && m.Id < cursorId));
+            }
+            else
+            {
+                query = query.Where(m => m.SentAt < cursor);
+            }
         }
 
         var page = query

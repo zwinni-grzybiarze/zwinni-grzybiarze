@@ -11,12 +11,23 @@ class MockChatRepository implements ChatRepository {
   Future<List<ChatMessage>> getHistory({
     required String roomId,
     DateTime? before,
+    String? beforeId,
     int limit = 50,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 50));
     var items = _store.messagesFor(roomId);
     if (before != null) {
-      items = items.where((m) => m.sentAt.isBefore(before)).toList();
+      items = items.where((m) {
+        final sent = m.sentAt.toUtc();
+        final cursor = before.toUtc();
+        if (sent.isBefore(cursor)) return true;
+        if (beforeId != null &&
+            sent.isAtSameMomentAs(cursor) &&
+            m.id.compareTo(beforeId) < 0) {
+          return true;
+        }
+        return false;
+      }).toList();
     }
     if (items.length > limit) {
       items = items.sublist(items.length - limit);

@@ -11,12 +11,14 @@ class HttpChatRepository implements ChatRepository {
   Future<List<ChatMessage>> getHistory({
     required String roomId,
     DateTime? before,
+    String? beforeId,
     int limit = 50,
   }) async {
     final response = await _dio.get<List<dynamic>>(
       '/api/chat/rooms/$roomId/messages',
       queryParameters: {
         if (before != null) 'before': before.toUtc().toIso8601String(),
+        if (before != null && beforeId != null) 'beforeId': beforeId,
         'limit': limit,
       },
     );

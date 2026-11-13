@@ -51,7 +51,7 @@ namespace OS.Repository.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoomId", "SentAt");
+                    b.HasIndex("RoomId", "SentAt", "Id");
 
                     b.ToTable("ChatMessages", (string)null);
                 });

@@ -13,7 +13,7 @@ internal sealed class ChatService(IChatMessageRepository repository) : IChatServ
         string body,
         CancellationToken cancellationToken = default)
     {
-        var normalizedRoomId = NormalizeRoomId(roomId);
+        var normalizedRoomId = ChatRooms.NormalizeRoomId(roomId);
         var normalizedSenderId = NormalizeRequired(senderId, "SenderId");
         var normalizedSenderName = NormalizeRequired(senderName, "SenderName");
         var normalizedBody = NormalizeBody(body);
@@ -34,28 +34,19 @@ internal sealed class ChatService(IChatMessageRepository repository) : IChatServ
     public Task<IReadOnlyList<ChatMessage>> GetHistoryAsync(
         string roomId,
         DateTime? before = null,
+        Guid? beforeId = null,
         int limit = ChatRooms.DefaultHistoryLimit,
         CancellationToken cancellationToken = default)
     {
-        var normalizedRoomId = NormalizeRoomId(roomId);
+        var normalizedRoomId = ChatRooms.NormalizeRoomId(roomId);
         var clampedLimit = Math.Clamp(limit, 1, ChatRooms.MaxHistoryLimit);
-        return repository.GetHistoryAsync(normalizedRoomId, before, clampedLimit, cancellationToken);
-    }
-
-    private static string NormalizeRoomId(string? roomId)
-    {
-        var value = roomId?.Trim();
-        if (string.IsNullOrEmpty(value))
-        {
-            throw new ValidationFailedException("RoomId is required.");
-        }
-
-        if (value.Length > 100)
-        {
-            throw new ValidationFailedException("RoomId is too long.");
-        }
-
-        return value;
+        var cursor = ChatRooms.NormalizeUtc(before);
+        return repository.GetHistoryAsync(
+            normalizedRoomId,
+            cursor,
+            beforeId,
+            clampedLimit,
+            cancellationToken);
     }
 
     private static string NormalizeRequired(string? value, string fieldName)

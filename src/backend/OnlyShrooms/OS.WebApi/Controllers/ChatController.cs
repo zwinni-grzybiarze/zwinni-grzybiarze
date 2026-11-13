@@ -14,12 +14,14 @@ public class ChatController(IChatService service) : ControllerBase
     public async Task<ActionResult<IEnumerable<ChatMessageResponse>>> GetHistory(
         string roomId,
         [FromQuery] DateTime? before,
+        [FromQuery] Guid? beforeId,
         [FromQuery] int? limit,
         CancellationToken cancellationToken)
     {
         var items = await service.GetHistoryAsync(
             roomId,
             before,
+            beforeId,
             limit ?? ChatRooms.DefaultHistoryLimit,
             cancellationToken);
 

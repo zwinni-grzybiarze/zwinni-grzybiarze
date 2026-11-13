@@ -13,13 +13,13 @@ public sealed class ChatHub(IChatService chatService) : Hub
 {
     public async Task JoinRoom(string roomId)
     {
-        var normalized = NormalizeRoomId(roomId);
+        var normalized = NormalizeRoomIdOrThrow(roomId);
         await Groups.AddToGroupAsync(Context.ConnectionId, normalized);
     }
 
     public async Task LeaveRoom(string roomId)
     {
-        var normalized = NormalizeRoomId(roomId);
+        var normalized = NormalizeRoomIdOrThrow(roomId);
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, normalized);
     }
 
@@ -48,14 +48,15 @@ public sealed class ChatHub(IChatService chatService) : Hub
         }
     }
 
-    private static string NormalizeRoomId(string? roomId)
+    private static string NormalizeRoomIdOrThrow(string? roomId)
     {
-        var value = roomId?.Trim();
-        if (string.IsNullOrEmpty(value))
+        try
         {
-            throw new HubException("RoomId is required.");
+            return ChatRooms.NormalizeRoomId(roomId);
         }
-
-        return value;
+        catch (ValidationFailedException ex)
+        {
+            throw new HubException(ex.Message);
+        }
     }
 }

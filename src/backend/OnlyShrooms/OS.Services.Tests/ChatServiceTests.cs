@@ -40,6 +40,23 @@ public sealed class ChatServiceTests
     }
 
     [TestMethod]
+    public async Task SendAsync_RoomIdTooLong_Throws()
+    {
+        var tooLong = new string('x', ChatRooms.MaxRoomIdLength + 1);
+        await Assert.ThrowsExactlyAsync<ValidationFailedException>(() =>
+            _service.SendAsync(tooLong, "u1", "Jan", "hej"));
+    }
+
+    [TestMethod]
+    public void NormalizeRoomId_SharedRules_TrimAndLength()
+    {
+        Assert.AreEqual("global", ChatRooms.NormalizeRoomId("  global  "));
+        Assert.ThrowsExactly<ValidationFailedException>(() => ChatRooms.NormalizeRoomId(" "));
+        Assert.ThrowsExactly<ValidationFailedException>(() =>
+            ChatRooms.NormalizeRoomId(new string('a', ChatRooms.MaxRoomIdLength + 1)));
+    }
+
+    [TestMethod]
     public async Task GetHistoryAsync_FiltersByRoomAndRespectsLimit()
     {
         var t1 = new DateTime(2026, 11, 12, 10, 0, 0, DateTimeKind.Utc);
@@ -89,5 +106,17 @@ public sealed class ChatServiceTests
         Assert.AreEqual("two", history[0].Body);
         Assert.AreEqual("three", history[1].Body);
         Assert.IsTrue(history.All(m => m.RoomId == ChatRooms.Global));
+    }
+
+    [TestMethod]
+    public async Task GetHistoryAsync_WhitespaceRoomId_MatchesTrimmedPersistedRoom()
+    {
+        await _service.SendAsync("  global  ", "u1", "Ala", "hej");
+
+        var history = await _service.GetHistoryAsync(" global", limit: 10);
+
+        Assert.HasCount(1, history);
+        Assert.AreEqual(ChatRooms.Global, history[0].RoomId);
+        Assert.AreEqual("hej", history[0].Body);
     }
 }

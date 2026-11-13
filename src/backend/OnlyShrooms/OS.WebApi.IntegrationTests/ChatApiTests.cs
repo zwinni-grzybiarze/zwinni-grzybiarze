@@ -67,4 +67,42 @@ public sealed class ChatApiTests
         Assert.AreEqual(JsonValueKind.Array, body.ValueKind);
         Assert.AreEqual(0, body.GetArrayLength());
     }
+
+    [TestMethod]
+    public async Task GetHistory_BeforeAndBeforeId_ReturnsOlderPage()
+    {
+        var roomId = $"room-{Guid.NewGuid():N}";
+        ChatMessage first;
+        ChatMessage second;
+
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var chat = scope.ServiceProvider.GetRequiredService<IChatService>();
+            first = await chat.SendAsync(roomId, "u1", "Ala", "first-msg");
+            second = await chat.SendAsync(roomId, "u2", "Bartek", "second-msg");
+        }
+
+        // Cursor = newest edge of a limit-1 page (SentAt DESC, Id DESC).
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var chat = scope.ServiceProvider.GetRequiredService<IChatService>();
+            var newestPage = await chat.GetHistoryAsync(roomId, limit: 1);
+            Assert.HasCount(1, newestPage);
+            var cursor = newestPage[0];
+            var otherId = cursor.Id == first.Id ? second.Id : first.Id;
+
+            var before = Uri.EscapeDataString(cursor.SentAt.ToUniversalTime().ToString("o"));
+            var response = await _client.GetAsync(
+                $"/api/chat/rooms/{roomId}/messages?before={before}&beforeId={cursor.Id}&limit=50");
+
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var ids = body.EnumerateArray()
+                .Select(m => m.GetProperty("chatMessageId").GetString())
+                .ToHashSet();
+
+            Assert.Contains(otherId.ToString(), ids);
+            Assert.DoesNotContain(cursor.Id.ToString(), ids);
+        }
+    }
 }
