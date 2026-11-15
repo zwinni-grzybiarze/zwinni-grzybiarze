@@ -119,6 +119,9 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> completeGoogleLogin(String token, {String? email}) async {}
+
+  @override
   Future<void> signOut() async {
     signOutCalls++;
   }
