@@ -32,7 +32,7 @@ public sealed class GrzybobranieRepositoryTests
         await _connection.DisposeAsync();
     }
 
-    private static Grzybobranie Create(string nazwa = "Borowiki", GrzybobranieStatus status = GrzybobranieStatus.PLANOWANE) => new()
+  private static Grzybobranie Create(string nazwa = "Borowiki", GrzybobranieStatus status = GrzybobranieStatus.PLANOWANE) => new()
     {
         Nazwa = nazwa,
         Opis = "Opis grzybobrania",

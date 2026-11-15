@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGrzybobranieRepository, GrzybobranieRepository>();
         services.AddScoped<IZadanieRepository, ZadanieRepository>();
 
+        services.AddScoped<IGrzybiarzRepository, GrzybiarzRepository>();
         return services;
     }
 
