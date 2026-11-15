@@ -10,5 +10,9 @@ public interface IZadanieService
 
     Task<Zadanie> CreateAsync(Zadanie zadanie, CancellationToken cancellationToken = default);
 
-    Task<Zadanie?> UpdateAsync(int id, Zadanie zadanie, CancellationToken cancellationToken = default);
+    Task<Zadanie?> UpdateAsync(
+        int id,
+        Zadanie zadanie,
+        CancellationToken cancellationToken = default,
+        bool updateGrzybobranieId = true);
 }

@@ -50,7 +50,7 @@ void main() {
   );
 
   test(
-    'toJson omits absent optional fields and serializes linked IDs as numbers',
+    'toJson includes an absent relationship as null and serializes linked IDs as numbers',
     () {
       const unlinked = Zadanie(id: 'new', nazwa: 'Luźne zadanie');
       const linked = Zadanie(
@@ -64,7 +64,8 @@ void main() {
       final unlinkedJson = unlinked.toJson();
       final linkedJson = linked.toJson();
 
-      expect(unlinkedJson.containsKey('grzybobranieId'), isFalse);
+      expect(unlinkedJson.containsKey('grzybobranieId'), isTrue);
+      expect(unlinkedJson['grzybobranieId'], isNull);
       expect(unlinkedJson.containsKey('opis'), isFalse);
       expect(linkedJson['grzybobranieId'], 23);
       expect(linkedJson['status'], 'ZAMKNIĘTE');

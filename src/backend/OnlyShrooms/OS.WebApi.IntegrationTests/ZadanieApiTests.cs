@@ -36,8 +36,39 @@ public sealed class ZadanieApiTests
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
+    private async Task<int> CreateGrzybobranieAsync(string nazwa)
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/grzybobrania",
+            new
+            {
+                nazwa,
+                lokalizacja = "Las",
+                dataOd = "2026-09-01T08:00:00Z",
+                dataDo = "2026-09-01T16:00:00Z",
+                status = "PLANOWANE",
+            });
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return created.GetProperty("grzybobranieId").GetInt32();
+    }
+
+    private async Task<JsonElement> CreateLinkedZadanieAsync(int grzybobranieId)
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/zadania",
+            new
+            {
+                nazwa = "Zabrać kosz",
+                grzybobranieId,
+                status = "OTWARTE",
+            });
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
     [TestMethod]
-    public async Task Post_CreatesAndReturnsLocationAndBody()
+    public async Task Post_CreatesAndReturnsBody()
     {
         var response = await _client.PostAsJsonAsync("/api/zadania", ValidRequest());
 
@@ -47,7 +78,7 @@ public sealed class ZadanieApiTests
         Assert.IsGreaterThan(0, id);
         Assert.EndsWith($"/api/zadania/{id}", response.Headers.Location!.ToString());
         Assert.AreEqual("Podgrzybki", body.GetProperty("nazwa").GetString());
-        Assert.AreEqual("OTWARTE", body.GetProperty("status").GetString());
+        Assert.AreEqual("Otwarte", body.GetProperty("status").GetString());
     }
 
     [TestMethod]
@@ -61,36 +92,68 @@ public sealed class ZadanieApiTests
     }
 
     [TestMethod]
-    public async Task Post_CreatesWithExistingGrzybobranie_AndCanUnlink()
+    public async Task Post_WithUnknownGrzybobranieId_Returns400()
     {
-        var grzybobranieResponse = await _client.PostAsJsonAsync(
-            "/api/grzybobrania",
-            new
-            {
-                nazwa = "Wyprawa",
-                lokalizacja = "Las",
-                dataOd = "2026-09-01T08:00:00Z",
-                dataDo = "2026-09-01T16:00:00Z",
-                status = "PLANOWANE",
-            });
-        Assert.AreEqual(HttpStatusCode.Created, grzybobranieResponse.StatusCode);
-        var grzybobranie = await grzybobranieResponse.Content.ReadFromJsonAsync<JsonElement>();
-        var grzybobranieId = grzybobranie.GetProperty("grzybobranieId").GetInt32();
-
         var response = await _client.PostAsJsonAsync(
             "/api/zadania",
             new
             {
-                nazwa = "Zabrać kosz",
-                grzybobranieId,
+                nazwa = "Zadanie z nieznanym grzybobraniem",
                 status = "OTWARTE",
+                grzybobranieId = int.MaxValue,
             });
 
-        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.AreEqual(
-            grzybobranieId,
-            created.GetProperty("grzybobranieId").GetInt32());
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Put_WithoutGrzybobranieId_PreservesExistingLink()
+    {
+        var grzybobranieId = await CreateGrzybobranieAsync("Wyprawa zachowaj");
+        var created = await CreateLinkedZadanieAsync(grzybobranieId);
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/zadania/{created.GetProperty("zadanieId").GetInt32()}",
+            new { nazwa = "Zabrać kosz - zmiana", status = "OTWARTE" });
+        Assert.AreEqual(HttpStatusCode.OK, update.StatusCode);
+        var updated = await update.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.AreEqual(grzybobranieId, updated.GetProperty("grzybobranieId").GetInt32());
+    }
+
+    [TestMethod]
+    public async Task Put_WithNullGrzybobranieId_UnlinksTask()
+    {
+        var grzybobranieId = await CreateGrzybobranieAsync("Wyprawa odłącz");
+        var created = await CreateLinkedZadanieAsync(grzybobranieId);
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/zadania/{created.GetProperty("zadanieId").GetInt32()}",
+            new { nazwa = "Zabrać kosz", status = "OTWARTE", grzybobranieId = (int?)null });
+        Assert.AreEqual(HttpStatusCode.OK, update.StatusCode);
+        var updated = await update.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.AreEqual(JsonValueKind.Null, updated.GetProperty("grzybobranieId").ValueKind);
+    }
+
+    [TestMethod]
+    public async Task Put_WithGrzybobranieId_ChangesLink()
+    {
+        var originalId = await CreateGrzybobranieAsync("Wyprawa początkowa");
+        var targetId = await CreateGrzybobranieAsync("Wyprawa docelowa");
+        var created = await CreateLinkedZadanieAsync(originalId);
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/zadania/{created.GetProperty("zadanieId").GetInt32()}",
+            new { nazwa = "Zabrać kosz", status = "OTWARTE", grzybobranieId = targetId });
+        Assert.AreEqual(HttpStatusCode.OK, update.StatusCode);
+        var updated = await update.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.AreEqual(targetId, updated.GetProperty("grzybobranieId").GetInt32());
+    }
+
+    [TestMethod]
+    public async Task Put_WithUnknownGrzybobranieId_Returns400AndKeepsExistingLink()
+    {
+        var originalId = await CreateGrzybobranieAsync("Wyprawa zachowaj po błędzie");
+        var created = await CreateLinkedZadanieAsync(originalId);
 
         var update = await _client.PutAsJsonAsync(
             $"/api/zadania/{created.GetProperty("zadanieId").GetInt32()}",
@@ -98,10 +161,14 @@ public sealed class ZadanieApiTests
             {
                 nazwa = "Zabrać kosz",
                 status = "OTWARTE",
+                grzybobranieId = int.MaxValue,
             });
-        Assert.AreEqual(HttpStatusCode.OK, update.StatusCode);
-        var updated = await update.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.AreEqual(JsonValueKind.Null, updated.GetProperty("grzybobranieId").ValueKind);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, update.StatusCode);
+
+        var unchanged = await _client.GetFromJsonAsync<JsonElement>(
+            $"/api/zadania/{created.GetProperty("zadanieId").GetInt32()}");
+        Assert.AreEqual(originalId, unchanged.GetProperty("grzybobranieId").GetInt32());
     }
 
     [TestMethod]
@@ -146,7 +213,7 @@ public sealed class ZadanieApiTests
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var item = await _client.GetFromJsonAsync<JsonElement>($"/api/zadania/{id}");
         Assert.AreEqual("Zmieniony", item.GetProperty("nazwa").GetString());
-        Assert.AreEqual("ZAMKNIĘTE", item.GetProperty("status").GetString());
+        Assert.AreEqual("Zamknięte", item.GetProperty("status").GetString());
     }
 
     [TestMethod]
@@ -168,9 +235,9 @@ public sealed class ZadanieApiTests
     }
 
     [TestMethod]
-    [DataRow("OTWARTE")]
-    [DataRow("ZAMKNIĘTE")]
-    [DataRow("ZARCHIWIZOWANE")]
+    [DataRow("Otwarte")]
+    [DataRow("Zamknięte")]
+    [DataRow("Zarchiwizowane")]
     public async Task Status_RoundTripsAsUpperSnakeCase(string status)
     {
         var created = await CreateAsync(ValidRequest(status: status));
