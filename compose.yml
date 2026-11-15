@@ -1,6 +1,10 @@
+# Local development / laptop run.
+#   docker compose up
+# Prod (Cloudflare): ./deploy-live.sh → compose.live.yml
+
 services:
   onlyshrooms:
-    image: onlyshrooms
+    image: ${ONLYSHROOMS_IMAGE:-onlyshrooms}
     container_name: onlyshrooms
     build:
       context: .
