@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/core/responsive.dart';
+import 'package:onlyshrooms/features/auth/auth_callback_page.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/auth/login_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/detail_page.dart';
@@ -13,7 +14,6 @@ import 'package:onlyshrooms/features/zadania/list_page.dart';
 
 /// Created once; auth changes refresh redirects via [refreshListenable].
 final goRouterProvider = Provider<GoRouter>((ref) {
-  // Prefer [read] so notifyListeners does not rebuild a new GoRouter.
   final auth = ref.read(authControllerProvider);
 
   return GoRouter(
@@ -22,9 +22,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final current = ref.read(authControllerProvider);
       if (!current.ready) return null;
-      final loggingIn = state.matchedLocation == '/login';
-      if (!current.isSignedIn && !loggingIn) return '/login';
-      if (current.isSignedIn && loggingIn) return '/';
+
+      final uri = state.uri;
+      final decodedFragment = uri.fragment.isEmpty
+          ? ''
+          : Uri.decodeFull(uri.fragment);
+      final currentUrl = uri.toString();
+      final currentLocation = decodedFragment.isNotEmpty
+          ? decodedFragment
+          : uri.path.isEmpty ? '/' : uri.path;
+      final isAuthCallback = currentLocation.contains('/auth/callback') ||
+          currentUrl.contains('/auth/callback') ||
+          currentUrl.contains('auth/callback');
+      final isLogin = currentLocation.contains('/login') ||
+          currentUrl.contains('/login') ||
+          currentUrl.contains('login');
+
+      if (isAuthCallback) return null;
+      if (!current.isSignedIn && !isLogin) return '/login';
+      if (current.isSignedIn && isLogin && !isAuthCallback) return '/';
       return null;
     },
     routes: [
@@ -33,7 +49,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => _AuthenticatedShell(child: child),
         routes: [
           GoRoute(
-            path: '/',
+            path: '/auth/callback',
+        builder: (context, state) => AuthCallbackPage(
+          token: state.uri.queryParameters['token'],
+          email: state.uri.queryParameters['email'],
+        ),
+      ),
+      GoRoute(
+        path: '/',
             builder: (context, state) => const GrzybobraniaListPage(),
           ),
           GoRoute(

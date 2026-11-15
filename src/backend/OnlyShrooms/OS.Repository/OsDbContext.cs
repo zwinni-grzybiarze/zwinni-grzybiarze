@@ -6,6 +6,7 @@ namespace OS.Repository;
 internal sealed class OsDbContext(DbContextOptions<OsDbContext> options) : DbContext(options)
 {
     public DbSet<GrzybobranieEntity> Grzybobrania => Set<GrzybobranieEntity>();
+    public DbSet<GrzybiarzEntity> Grzybiarze => Set<GrzybiarzEntity>();
 
     public DbSet<ZadanieEntity> Zadania => Set<ZadanieEntity>();
 

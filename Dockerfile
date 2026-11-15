@@ -10,8 +10,8 @@ WORKDIR /app
 EXPOSE 8080
 ENV ConnectionStrings__Default="Data Source=/data/onlyshrooms.db"
 
-# Flutter web build
-FROM ghcr.io
+# Flutter web build. This stage is only used to produce static files.
+FROM ghcr.io/cirruslabs/flutter:stable AS frontend
 WORKDIR /src/frontend
 COPY src/frontend/pubspec.yaml src/frontend/pubspec.lock ./
 RUN flutter pub get

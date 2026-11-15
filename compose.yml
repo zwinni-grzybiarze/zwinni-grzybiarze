@@ -1,0 +1,16 @@
+services:
+  onlyshrooms:
+    image: onlyshrooms
+    container_name: onlyshrooms
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - onlyshrooms-data:/data
+volumes:
+  onlyshrooms-data:
+    name: onlyshrooms-data
