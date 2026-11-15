@@ -62,8 +62,9 @@ class Zadanie {
 
   Map<String, dynamic> toJson() => {
     'zadanieId': id,
-    if (grzybobranieId != null && grzybobranieId!.isNotEmpty)
-      'grzybobranieId': int.tryParse(grzybobranieId!) ?? grzybobranieId,
+    'grzybobranieId': grzybobranieId == null || grzybobranieId!.isEmpty
+        ? null
+        : int.tryParse(grzybobranieId!) ?? grzybobranieId,
     'nazwa': nazwa,
     if (opis != null) 'opis': opis,
     if (kolejnosc != null) 'kolejnosc': kolejnosc,

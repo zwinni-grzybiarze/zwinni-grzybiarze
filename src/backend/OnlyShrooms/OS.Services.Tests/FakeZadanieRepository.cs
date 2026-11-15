@@ -26,13 +26,21 @@ internal sealed class FakeZadanieRepository : IZadanieRepository
         return Task.FromResult(zadanie);
     }
 
-    public Task<Zadanie?> UpdateAsync(Zadanie zadanie, CancellationToken cancellationToken = default)
+    public Task<Zadanie?> UpdateAsync(
+        Zadanie zadanie,
+        CancellationToken cancellationToken = default,
+        bool updateGrzybobranieId = true)
     {
         LastUpdated = zadanie;
         var index = _items.FindIndex(i => i.Id == zadanie.Id);
         if (index < 0)
         {
             return Task.FromResult<Zadanie?>(null);
+        }
+
+        if (!updateGrzybobranieId)
+        {
+            zadanie.GrzybobranieId = _items[index].GrzybobranieId;
         }
 
         _items[index] = zadanie;

@@ -6,7 +6,8 @@ void main() {
   test('Zadanie can be saved with or without a grzybobranie', () {
     const unlinked = Zadanie(id: 'new', nazwa: 'Nowe zadanie');
     expect(unlinked.grzybobranieId, isNull);
-    expect(unlinked.toJson().containsKey('grzybobranieId'), isFalse);
+    expect(unlinked.toJson().containsKey('grzybobranieId'), isTrue);
+    expect(unlinked.toJson()['grzybobranieId'], isNull);
 
     const linked = Zadanie(
       id: 'new',

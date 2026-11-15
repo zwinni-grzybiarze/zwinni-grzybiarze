@@ -34,7 +34,10 @@ internal sealed class ZadanieRepository(OsDbContext context) : IZadanieRepositor
         return ZadanieMapper.ToModel(entity);
     }
 
-    public async Task<Zadanie?> UpdateAsync(Zadanie zadanie, CancellationToken cancellationToken = default)
+    public async Task<Zadanie?> UpdateAsync(
+        Zadanie zadanie,
+        CancellationToken cancellationToken = default,
+        bool updateGrzybobranieId = true)
     {
         var entity = await context.Zadania.SingleOrDefaultAsync(e => e.Id == zadanie.Id, cancellationToken);
         if (entity is null)
@@ -42,7 +45,13 @@ internal sealed class ZadanieRepository(OsDbContext context) : IZadanieRepositor
             return null;
         }
 
+        var existingGrzybobranieId = entity.GrzybobranieId;
         ZadanieMapper.UpdateEntity(zadanie, entity);
+        if (!updateGrzybobranieId)
+        {
+            entity.GrzybobranieId = existingGrzybobranieId;
+        }
+
         await context.SaveChangesAsync(cancellationToken);
 
         return ZadanieMapper.ToModel(entity);

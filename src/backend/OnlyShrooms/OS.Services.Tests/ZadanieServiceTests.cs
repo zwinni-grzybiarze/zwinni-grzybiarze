@@ -6,13 +6,15 @@ namespace OS.Services.Tests;
 public sealed class ZadanieServiceTests
 {
     private FakeZadanieRepository _repository = null!;
+    private FakeGrzybobranieRepository _grzybobranieRepository = null!;
     private ZadanieService _service = null!;
 
     [TestInitialize]
     public void Initialize()
     {
         _repository = new FakeZadanieRepository();
-        _service = new ZadanieService(_repository);
+        _grzybobranieRepository = new FakeGrzybobranieRepository();
+        _service = new ZadanieService(_repository, _grzybobranieRepository);
     }
 
     private static Zadanie Valid() => new()
@@ -49,6 +51,17 @@ public sealed class ZadanieServiceTests
     }
 
     [TestMethod]
+    public async Task CreateAsync_UnknownGrzybobranieId_ThrowsBeforeAdding()
+    {
+        var input = Valid();
+        input.GrzybobranieId = 404;
+
+        await Assert.ThrowsExactlyAsync<ValidationFailedException>(() => _service.CreateAsync(input));
+
+        Assert.IsNull(_repository.LastAdded);
+    }
+
+    [TestMethod]
     public async Task UpdateAsync_UsesRouteIdAndSavesChanges()
     {
         var created = await _service.CreateAsync(Valid());
@@ -69,6 +82,18 @@ public sealed class ZadanieServiceTests
     public async Task UpdateAsync_UnknownId_ReturnsNull()
     {
         Assert.IsNull(await _service.UpdateAsync(404, Valid()));
+    }
+
+    [TestMethod]
+    public async Task UpdateAsync_UnknownGrzybobranieId_ThrowsBeforeUpdating()
+    {
+        var created = await _service.CreateAsync(Valid());
+        var changes = Valid();
+        changes.GrzybobranieId = 404;
+
+        await Assert.ThrowsExactlyAsync<ValidationFailedException>(() => _service.UpdateAsync(created.Id, changes));
+
+        Assert.IsNull(_repository.LastUpdated);
     }
 
     [TestMethod]
