@@ -10,5 +10,8 @@ public interface IZadanieRepository
 
     Task<Zadanie> AddAsync(Zadanie zadanie, CancellationToken cancellationToken = default);
 
-    Task<Zadanie?> UpdateAsync(Zadanie zadanie, CancellationToken cancellationToken = default);
+    Task<Zadanie?> UpdateAsync(
+        Zadanie zadanie,
+        CancellationToken cancellationToken = default,
+        bool updateGrzybobranieId = true);
 }

@@ -17,7 +17,7 @@ void main() {
         'zadania': [
           {
             'zadanieId': 1,
-            'tytul': 'Kosze',
+            'nazwa': 'Kosze',
             'opis': 'x',
             'grzybobranieId': 7,
           },
