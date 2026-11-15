@@ -1,0 +1,28 @@
+# Prod / Cloudflare subdomain only (no Caddy) on n4-alpha node
+# Deploy on this machine: ./deploy-live.sh
+#
+# cloudflared (network `proxy`) → HTTP → onlyshrooms:8080
+# Host loopback check: http://127.0.0.1:18080/build-info.json
+#
+# Other runners: docker compose -f docker-compose.yml (Caddy).
+
+services:
+  onlyshrooms:
+    image: ${ONLYSHROOMS_IMAGE:-onlyshrooms}
+    container_name: onlyshrooms
+    volumes:
+      - onlyshrooms-data:/data
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:18080:8080"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+volumes:
+  onlyshrooms-data:
+
+networks:
+  proxy:
+    external: true

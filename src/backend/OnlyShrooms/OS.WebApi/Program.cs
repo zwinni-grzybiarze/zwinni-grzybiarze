@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using OS.Repository.DependencyInjection;
 using OS.Services.DependencyInjection;
+using OS.WebApi.Hubs;
 using OS.WebApi.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,7 @@ builder.Services
         // Enum member names are the wire format (PLANOWANE, W_TOKU, …).
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+builder.Services.AddSignalR();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ValidationFailedExceptionHandler>();
 builder.Services.AddCors(options =>
@@ -99,33 +101,32 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 
-app.UseDefaultFiles();
-app.UseStaticFiles(new StaticFileOptions
+// Showcase / tunnel deploys: never let browsers or Cloudflare keep a stale Flutter shell.
+// Previously only index.html was no-cache; main.dart.js / icons kept serving old PWAs after redeploy.
+var staticOpts = new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        var path = ctx.File.Name;
-        // Keep the shell fresh so PWA clients pick up new service-worker / index after redeploy.
-        if (path.Equals("index.html", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("flutter_service_worker.js", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("manifest.json", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("flutter_bootstrap.js", StringComparison.OrdinalIgnoreCase))
-        {
-            ctx.Context.Response.Headers.CacheControl = "no-cache";
-        }
+        ctx.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+        ctx.Context.Response.Headers.Pragma = "no-cache";
+        ctx.Context.Response.Headers.Expires = "0";
 
-        if (path.Equals("manifest.json", StringComparison.OrdinalIgnoreCase))
+        if (ctx.File.Name.Equals("manifest.json", StringComparison.OrdinalIgnoreCase))
         {
             ctx.Context.Response.ContentType = "application/manifest+json";
         }
     },
-});
+};
+
+app.UseDefaultFiles();
+app.UseStaticFiles(staticOpts);
 
 app.UseCors("LocalFrontend");
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapFallbackToFile("index.html");
+app.MapHub<ChatHub>("/hubs/chat");
+app.MapFallbackToFile("index.html", staticOpts);
 
 app.Run();
 
