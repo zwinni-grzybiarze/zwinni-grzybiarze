@@ -17,6 +17,7 @@ dependencies:
   oidc_default_store: ^2.0.0
   url_launcher: ^6.3.3
   flutter_secure_storage: ^11.2.0
+  signalr_netcore: ^1.4.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
