@@ -9,7 +9,7 @@ set -euo pipefail
 Tag="${Tag:-onlyshrooms}"
 Configuration="${Configuration:-Release}"
 SkipBuild=0
-ComposeFile="docker-compose.live.yml"
+ComposeFile="compose.live.yml"
 ProjectName="onlyshrooms"
 
 while [[ $# -gt 0 ]]; do
@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
 Usage: ./deploy-live.sh [--tag NAME] [--configuration Release|Debug] [--skip-build]
 
   Build current git checkout → image → recreate onlyshrooms on :18080.
-  Other runners: docker compose -f docker-compose.yml (Caddy). Not this script.
+  Local: docker compose up (compose.yml). Not this script.
 EOF
       exit 0
       ;;
