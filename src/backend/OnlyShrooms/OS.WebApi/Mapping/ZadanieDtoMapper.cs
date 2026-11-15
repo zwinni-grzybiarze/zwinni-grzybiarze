@@ -13,5 +13,6 @@ internal static partial class ZadanieDtoMapper
     public static partial Zadanie ToModel(CreateZadanieRequest request);
 
     [MapperIgnoreTarget(nameof(Zadanie.Id))]
+    [MapperIgnoreSource(nameof(UpdateZadanieRequest.GrzybobranieIdSpecified))]
     public static partial Zadanie ToModel(UpdateZadanieRequest request);
 }

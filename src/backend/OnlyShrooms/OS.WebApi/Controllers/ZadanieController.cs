@@ -35,7 +35,11 @@ public class ZadanieController(IZadanieService service) : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ZadanieResponse>> Update(int id, UpdateZadanieRequest request, CancellationToken cancellationToken)
     {
-        var updated = await service.UpdateAsync(id, ZadanieDtoMapper.ToModel(request), cancellationToken);
+        var updated = await service.UpdateAsync(
+            id,
+            ZadanieDtoMapper.ToModel(request),
+            cancellationToken,
+            request.GrzybobranieIdSpecified);
         return updated is null ? NotFound() : Ok(ZadanieDtoMapper.ToResponse(updated));
     }
 }

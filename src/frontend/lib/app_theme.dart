@@ -6,6 +6,9 @@ class OnlyShroomsTheme {
   static const leaf = Color(0xFF40916C);
   static const cream = Color(0xFFF0EAD2);
   static const bark = Color(0xFF081C15);
+  static const inactiveFilterBackground = Color(0xFFF4D8B8);
+  static const detailBarBackground = Color(0x662D6A4F);
+  static const detailPanelBackground = Color(0xEBFFFFFF);
 
   static ThemeData light() {
     final base = ColorScheme.fromSeed(
@@ -18,7 +21,7 @@ class OnlyShroomsTheme {
     return ThemeData(
       colorScheme: base,
       useMaterial3: true,
-      scaffoldBackgroundColor: cream,
+      scaffoldBackgroundColor: Colors.transparent,
       appBarTheme: const AppBarTheme(
         backgroundColor: forest,
         foregroundColor: Colors.white,

@@ -58,6 +58,9 @@ namespace OS.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("GrzybobranieId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Nazwa")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -73,7 +76,17 @@ namespace OS.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GrzybobranieId");
+
                     b.ToTable("Zadania", (string)null);
+                });
+
+            modelBuilder.Entity("OS.Entities.ZadanieEntity", b =>
+                {
+                    b.HasOne("OS.Entities.GrzybobranieEntity", null)
+                        .WithMany()
+                        .HasForeignKey("GrzybobranieId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 #pragma warning restore 612, 618
         }

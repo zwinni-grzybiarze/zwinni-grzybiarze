@@ -10,5 +10,8 @@ public class ZadanieResponse
     public string Nazwa { get; set; } = string.Empty;
 
     public string? Opis { get; set; }
+
+    public int? GrzybobranieId { get; set; }
+
     public ZadanieStatusDto Status { get; set; }
 }
