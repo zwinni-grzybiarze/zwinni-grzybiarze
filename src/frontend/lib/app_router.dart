@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:onlyshrooms/features/auth/auth_callback_page.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/auth/login_page.dart';
 import 'package:onlyshrooms/features/chat/chat_page.dart';
@@ -51,6 +52,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/auth/callback',
+        builder: (context, state) => AuthCallbackPage(
+          token: state.uri.queryParameters['token'],
+          email: state.uri.queryParameters['email'],
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
