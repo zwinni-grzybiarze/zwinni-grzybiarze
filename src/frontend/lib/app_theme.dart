@@ -41,10 +41,37 @@ class OnlyShroomsTheme {
         backgroundColor: moss,
         foregroundColor: Colors.white,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: forest,
+        indicatorColor: moss,
+        overlayColor: const WidgetStatePropertyAll(Color(0x22FFFFFF)),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            color: selected ? cream : cream.withValues(alpha: 0.75),
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected ? cream : cream.withValues(alpha: 0.75),
+          );
+        }),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.85),
+        fillColor: Colors.white.withValues(alpha: 0.92),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        labelStyle: const TextStyle(
+          color: bark,
+          fontWeight: FontWeight.w600,
+        ),
+        floatingLabelStyle: TextStyle(
+          color: moss.withValues(alpha: 0.95),
+          fontWeight: FontWeight.w600,
+        ),
       ),
       cardTheme: CardThemeData(
         color: Colors.white.withValues(alpha: 0.92),

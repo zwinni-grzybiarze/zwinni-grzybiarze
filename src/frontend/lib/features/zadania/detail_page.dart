@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/app_theme.dart';
+import 'package:onlyshrooms/core/navigation.dart';
 import 'package:onlyshrooms/core/responsive.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
 import 'package:onlyshrooms/features/grzybobrania/grzybobrania_controller.dart';
@@ -76,17 +77,21 @@ class _ZadanieDetailPageState extends ConsumerState<ZadanieDetailPage>
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: OnlyShroomsTheme.detailBarBackground,
-        toolbarHeight: 48,
+        backgroundColor: OnlyShroomsTheme.forest,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        toolbarHeight: kToolbarHeight,
+        leading: BackButton(
+          onPressed: () =>
+              popOrGo(context, widget.returnToPath ?? '/zadania'),
+        ),
         title: Text(
-          z?.nazwa ?? 'Zadanie',
+          z?.nazwa != null ? 'Zadanie „${z!.nazwa}”' : 'Zadanie',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: compact ? 16 : 18),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(widget.returnToPath ?? '/zadania'),
         ),
         actions: [
           if (z != null)
@@ -100,7 +105,7 @@ class _ZadanieDetailPageState extends ConsumerState<ZadanieDetailPage>
                       'returnTo': widget.returnToPath!,
                   },
                 );
-                context.go(location.toString());
+                context.push(location.toString());
               },
               icon: const Icon(Icons.edit),
             ),
@@ -111,6 +116,7 @@ class _ZadanieDetailPageState extends ConsumerState<ZadanieDetailPage>
           unselectedLabelColor: Colors.white70,
           indicatorColor: OnlyShroomsTheme.cream,
           indicatorWeight: 2,
+          dividerColor: Colors.transparent,
           labelStyle: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: compact ? 12 : 14,
@@ -130,11 +136,30 @@ class _ZadanieDetailPageState extends ConsumerState<ZadanieDetailPage>
                   ),
                 ]
               : const [
-                  Tab(height: 44, text: 'Szczegóły'),
-                  Tab(height: 44, text: 'Członkowie'),
+                  Tab(height: 30, text: 'Szczegóły'),
+                  Tab(height: 30, text: 'Członkowie'),
                 ],
         ),
       ),
+      floatingActionButton: z == null
+          ? null
+          : AnimatedBuilder(
+              animation: _tabs,
+              builder: (context, child) {
+                if (_tabs.index != 1) return const SizedBox.shrink();
+                return compact
+                    ? FloatingActionButton(
+                        onPressed: () => _addMember(z.id),
+                        tooltip: 'Dodaj członka',
+                        child: const Icon(Icons.person_add),
+                      )
+                    : FloatingActionButton.extended(
+                        onPressed: () => _addMember(z.id),
+                        icon: const Icon(Icons.person_add),
+                        label: const Text('Dodaj członka'),
+                      );
+              },
+            ),
       body: ctrl.detailLoading
           ? const Center(child: CircularProgressIndicator())
           : z == null
@@ -152,6 +177,56 @@ class _ZadanieDetailPageState extends ConsumerState<ZadanieDetailPage>
               ],
             ),
     );
+  }
+
+  Future<void> _addMember(String zadanieId) async {
+    final imie = TextEditingController();
+    final nazwisko = TextEditingController();
+    final email = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dodaj członka'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: imie,
+                decoration: const InputDecoration(labelText: 'Imię'),
+              ),
+              TextField(
+                controller: nazwisko,
+                decoration: const InputDecoration(labelText: 'Nazwisko'),
+              ),
+              TextField(
+                controller: email,
+                decoration: const InputDecoration(labelText: 'E-mail'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Anuluj'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Dodaj'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    if (imie.text.trim().isEmpty || nazwisko.text.trim().isEmpty) return;
+    final member = Grzybiarz(
+      id: 'local-${DateTime.now().millisecondsSinceEpoch}',
+      imie: imie.text.trim(),
+      nazwisko: nazwisko.text.trim(),
+      email: email.text.trim().isEmpty ? null : email.text.trim(),
+    );
+    await ref.read(zadaniaControllerProvider.notifier).addMember(zadanieId, member);
   }
 }
 
@@ -260,111 +335,41 @@ class _MembersTab extends ConsumerWidget {
 
     return AdaptivePage(
       padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          Padding(
-            padding: context.pagePadding.copyWith(bottom: 8),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: compact
-                  ? IconButton.filled(
-                      onPressed: () => _addMember(context, ref),
-                      tooltip: 'Dodaj członka',
-                      icon: const Icon(Icons.person_add),
-                    )
-                  : FilledButton.icon(
-                      onPressed: () => _addMember(context, ref),
-                      icon: const Icon(Icons.person_add),
-                      label: const Text('Dodaj członka'),
+      child: members.isEmpty
+          ? const Center(
+              child: Text(
+                'Brak członków',
+                style: TextStyle(color: OnlyShroomsTheme.cream),
+              ),
+            )
+          : ListView.separated(
+              padding: context.pagePadding,
+              itemCount: members.length,
+              separatorBuilder: (context, index) =>
+                  const SizedBox(height: 6),
+              itemBuilder: (context, i) {
+                final m = members[i];
+                return Card(
+                  child: ListTile(
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: compact ? 12 : 16,
+                      vertical: 4,
                     ),
-            ),
-          ),
-          Expanded(
-            child: members.isEmpty
-                ? const Center(child: Text('Brak członków',style: TextStyle(color: OnlyShroomsTheme.cream)))
-                : ListView.separated(
-                    padding: context.pagePadding.copyWith(top: 0),
-                    itemCount: members.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 6),
-                    itemBuilder: (context, i) {
-                      final m = members[i];
-                      return Card(
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: compact ? 12 : 16,
-                            vertical: 4,
-                          ),
-                          leading: CircleAvatar(
-                            child: Text(m.imie.isNotEmpty ? m.imie[0] : '?'),
-                          ),
-                          title: Text(m.displayName),
-                          subtitle: Text(m.email ?? 'id: ${m.id}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.person_remove_outlined),
-                            onPressed: () => ref
-                                .read(zadaniaControllerProvider.notifier)
-                                .removeMember(zadanieId, m.id),
-                          ),
-                        ),
-                      );
-                    },
+                    leading: CircleAvatar(
+                      child: Text(m.imie.isNotEmpty ? m.imie[0] : '?'),
+                    ),
+                    title: Text(m.displayName),
+                    subtitle: Text(m.email ?? 'id: ${m.id}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.person_remove_outlined),
+                      onPressed: () => ref
+                          .read(zadaniaControllerProvider.notifier)
+                          .removeMember(zadanieId, m.id),
+                    ),
                   ),
-          ),
-        ],
-      ),
+                );
+              },
+            ),
     );
-  }
-
-  Future<void> _addMember(BuildContext context, WidgetRef ref) async {
-    final imie = TextEditingController();
-    final nazwisko = TextEditingController();
-    final email = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Dodaj członka'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: imie,
-                decoration: const InputDecoration(labelText: 'Imię'),
-              ),
-              TextField(
-                controller: nazwisko,
-                decoration: const InputDecoration(labelText: 'Nazwisko'),
-              ),
-              TextField(
-                controller: email,
-                decoration: const InputDecoration(labelText: 'E-mail'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Anuluj'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Dodaj'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    if (imie.text.trim().isEmpty || nazwisko.text.trim().isEmpty) return;
-    final member = Grzybiarz(
-      id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-      imie: imie.text.trim(),
-      nazwisko: nazwisko.text.trim(),
-      email: email.text.trim().isEmpty ? null : email.text.trim(),
-    );
-    await ref
-        .read(zadaniaControllerProvider.notifier)
-        .addMember(zadanieId, member);
   }
 }

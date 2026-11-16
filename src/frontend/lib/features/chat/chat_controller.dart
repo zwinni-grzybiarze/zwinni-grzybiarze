@@ -10,6 +10,7 @@ import 'package:onlyshrooms/data/chat/http_chat_repository.dart';
 import 'package:onlyshrooms/data/chat/mock_chat_repository.dart';
 import 'package:onlyshrooms/domain/chat_message.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final mockChatStoreProvider = Provider<MockChatStore>((ref) => MockChatStore());
 
@@ -27,6 +28,8 @@ final chatHubClientProvider = Provider<ChatHubClient>((ref) {
   return SignalRChatHubClient();
 });
 
+/// Kept alive while [MainShell] watches it so the hub can flag unread
+/// outside the Chat tab; auto-disposes after logout / leaving the shell.
 final chatControllerProvider =
     ChangeNotifierProvider.autoDispose<ChatController>((ref) {
   final controller = ChatController(
@@ -64,7 +67,26 @@ class ChatController extends ChangeNotifier {
   StreamSubscription<ChatMessage>? _sub;
   StreamSubscription<bool>? _connSub;
 
+  /// True while the Chat tab is visible — live messages are auto-marked read.
+  bool _viewingChat = false;
+  DateTime? _lastReadAt;
+
+  static String _prefsKey(String roomId) => 'chat_last_read_at_$roomId';
+
+  bool get hasUnread {
+    final uid = _auth.user?.id;
+    final cutoff = _lastReadAt;
+    if (cutoff == null || messages.isEmpty) return false;
+    return messages.any(
+      (m) =>
+          m.sentAt.isAfter(cutoff) &&
+          (uid == null || m.senderId != uid),
+    );
+  }
+
   Future<void> start() async {
+    await _loadLastRead();
+
     final user = _auth.user;
     if (user == null) {
       error = 'Brak zalogowanego użytkownika.';
@@ -100,6 +122,39 @@ class ChatController extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadLastRead() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey(roomId));
+    if (raw == null) return;
+    _lastReadAt = DateTime.tryParse(raw)?.toUtc();
+  }
+
+  /// Call when entering / leaving the Chat tab.
+  Future<void> setViewingChat(bool viewing) async {
+    final changed = _viewingChat != viewing;
+    _viewingChat = viewing;
+    // Entering clears the badge; leaving stamps "last seen" for later unread.
+    if (changed || viewing) {
+      await markRead();
+    }
+  }
+
+  Future<void> markRead() async {
+    final latest = messages.isEmpty
+        ? DateTime.now().toUtc()
+        : messages.map((m) => m.sentAt).reduce(
+              (a, b) => a.isAfter(b) ? a : b,
+            );
+    if (_lastReadAt != null && !latest.isAfter(_lastReadAt!)) {
+      notifyListeners();
+      return;
+    }
+    _lastReadAt = latest;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey(roomId), latest.toIso8601String());
+    notifyListeners();
+  }
+
   Future<void> _onConnectionState(bool isUp) async {
     final cameBack = isUp && !connected;
     connected = isUp;
@@ -124,13 +179,20 @@ class ChatController extends ChangeNotifier {
         messages.add(m);
       }
     }
+    if (_viewingChat) {
+      await markRead();
+    }
   }
 
   void _onLiveMessage(ChatMessage message) {
     if (message.roomId != roomId) return;
     if (messages.any((m) => m.id == message.id)) return;
     messages.add(message);
-    notifyListeners();
+    if (_viewingChat) {
+      unawaited(markRead());
+    } else {
+      notifyListeners();
+    }
   }
 
   Future<bool> send(String body) async {
