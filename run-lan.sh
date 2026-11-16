@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the local image and start HTTPS (Caddy) for LAN phone / PWA testing.
+# Build the local image and start the app via compose.yml (HTTP :8080).
 set -euo pipefail
 
 Tag="${Tag:-onlyshrooms}"
@@ -19,14 +19,13 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 "$root/build-local.sh" --tag "$Tag"
 
-"$root/deploy/ensure-tls.sh"
-
 export ONLYSHROOMS_IMAGE="$Tag"
 
 # Stop any leftover single-container run from run-local.sh
 docker rm -f onlyshrooms-dev >/dev/null 2>&1 || true
 
 lan_ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
-echo "==> Starting LAN stack (HTTPS on :443, HTTP app on :8080)"
-[[ -n "$lan_ip" ]] && echo "    Phone URL: https://${lan_ip}  (accept cert warning once, then Install app)"
-docker compose -f "$root/docker-compose.yml" up --remove-orphans
+echo "==> Starting local stack (HTTP on :8080)"
+[[ -n "$lan_ip" ]] && echo "    Phone URL: http://${lan_ip}:8080"
+# compose.yml builds/runs by default; image override if already built as $Tag
+docker compose -f "$root/compose.yml" up --remove-orphans
