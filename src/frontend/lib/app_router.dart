@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:onlyshrooms/core/responsive.dart';
-import 'package:onlyshrooms/features/auth/auth_callback_page.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/auth/login_page.dart';
+import 'package:onlyshrooms/features/chat/chat_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/detail_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/edit_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/list_page.dart';
+import 'package:onlyshrooms/features/profil/profil_page.dart';
+import 'package:onlyshrooms/features/shell/main_shell.dart';
 import 'package:onlyshrooms/features/zadania/detail_page.dart';
 import 'package:onlyshrooms/features/zadania/edit_page.dart';
 import 'package:onlyshrooms/features/zadania/list_page.dart';
 
 /// Created once; auth changes refresh redirects via [refreshListenable].
 final goRouterProvider = Provider<GoRouter>((ref) {
+  // Prefer [read] so notifyListeners does not rebuild a new GoRouter.
   final auth = ref.read(authControllerProvider);
 
   return GoRouter(
@@ -30,7 +32,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final currentUrl = uri.toString();
       final currentLocation = decodedFragment.isNotEmpty
           ? decodedFragment
-          : uri.path.isEmpty ? '/' : uri.path;
+          : uri.path.isEmpty
+              ? '/'
+              : uri.path;
       final isAuthCallback = currentLocation.contains('/auth/callback') ||
           currentUrl.contains('/auth/callback') ||
           currentUrl.contains('auth/callback');
@@ -44,124 +48,90 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-      ShellRoute(
-        builder: (context, state, child) => _AuthenticatedShell(child: child),
-        routes: [
-          GoRoute(
-            path: '/auth/callback',
-        builder: (context, state) => AuthCallbackPage(
-          token: state.uri.queryParameters['token'],
-          email: state.uri.queryParameters['email'],
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginPage(),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            MainShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const GrzybobraniaListPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/zadania',
+                builder: (context, state) => const ZadaniaListPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/chat',
+                builder: (context, state) => const ChatPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profil',
+                builder: (context, state) => const ProfilPage(),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/grzybobrania/new',
+        builder: (context, state) => const GrzybobranieEditPage(),
+      ),
+      GoRoute(
+        path: '/grzybobrania/:id',
+        builder: (context, state) => GrzybobranieDetailPage(
+          id: state.pathParameters['id']!,
+          initialTab: state.uri.queryParameters['tab'] == 'zadania' ? 1 : 0,
         ),
       ),
       GoRoute(
-        path: '/',
-            builder: (context, state) => const GrzybobraniaListPage(),
-          ),
-          GoRoute(
-            path: '/grzybobrania/new',
-            builder: (context, state) => const GrzybobranieEditPage(),
-          ),
-          GoRoute(
-            path: '/grzybobrania/:id',
-            builder: (context, state) => GrzybobranieDetailPage(
-              id: state.pathParameters['id']!,
-              initialTab: state.uri.queryParameters['tab'] == 'zadania' ? 1 : 0,
-            ),
-          ),
-          GoRoute(
-            path: '/grzybobrania/:id/edit',
-            builder: (context, state) =>
-                GrzybobranieEditPage(id: state.pathParameters['id']),
-          ),
-          GoRoute(
-            path: '/zadania',
-            builder: (context, state) => const ZadaniaListPage(),
-          ),
-          GoRoute(
-            path: '/zadania/new',
-            builder: (context, state) => ZadanieEditPage(
-              initialGrzybobranieId:
-                  state.uri.queryParameters['grzybobranieId'],
-              returnToGrzybobranieId:
-                  state.uri.queryParameters['returnToGrzybobranieId'],
-              returnToPath: state.uri.queryParameters['returnTo'],
-            ),
-          ),
-          GoRoute(
-            path: '/zadania/:id',
-            builder: (context, state) => ZadanieDetailPage(
-              id: state.pathParameters['id']!,
-              returnToPath: state.uri.queryParameters['returnTo'],
-            ),
-          ),
-          GoRoute(
-            path: '/zadania/:id/edit',
-            builder: (context, state) => ZadanieEditPage(
-              id: state.pathParameters['id'],
-              returnToPath: state.uri.queryParameters['returnTo'],
-            ),
-          ),
-        ],
+        path: '/grzybobrania/:id/edit',
+        builder: (context, state) =>
+            GrzybobranieEditPage(id: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/zadania/new',
+        builder: (context, state) => ZadanieEditPage(
+          initialGrzybobranieId: state.uri.queryParameters['grzybobranieId'],
+          returnToGrzybobranieId:
+              state.uri.queryParameters['returnToGrzybobranieId'],
+          returnToPath: state.uri.queryParameters['returnTo'],
+        ),
+      ),
+      GoRoute(
+        path: '/zadania/:id',
+        builder: (context, state) => ZadanieDetailPage(
+          id: state.pathParameters['id']!,
+          returnToPath: state.uri.queryParameters['returnTo'],
+        ),
+      ),
+      GoRoute(
+        path: '/zadania/:id/edit',
+        builder: (context, state) => ZadanieEditPage(
+          id: state.pathParameters['id'],
+          returnToPath: state.uri.queryParameters['returnTo'],
+        ),
       ),
     ],
-    errorBuilder: (context, state) =>
-        Scaffold(body: Center(child: Text('Nie znaleziono: ${state.error}'))),
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(child: Text('Nie znaleziono: ${state.error}')),
+    ),
   );
 });
-
-class _AuthenticatedShell extends ConsumerWidget {
-  const _AuthenticatedShell({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authControllerProvider);
-    final compact = context.isCompact;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Semantics(
-          button: true,
-          label: 'Strona główna',
-          child: InkWell(
-            borderRadius: BorderRadius.circular(4),
-            onTap: () => context.go('/'),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 4),
-              child: Text('OnlyShrooms'),
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Zadania',
-            onPressed: () => context.go('/zadania'),
-            icon: const Icon(Icons.checklist),
-          ),
-          if (auth.user != null && !compact)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Center(
-                child: Text(
-                  auth.user!.displayName,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-            ),
-          IconButton(
-            tooltip: 'Wyloguj',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) context.go('/login');
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: child,
-    );
-  }
-}

@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGrzybiarzService, GrzybiarzService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IZadanieService, ZadanieService>();
+        services.AddScoped<IChatService, ChatService>();
 
         return services;
     }
