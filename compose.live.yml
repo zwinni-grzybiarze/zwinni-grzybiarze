@@ -10,6 +10,8 @@ services:
   onlyshrooms:
     image: ${ONLYSHROOMS_IMAGE:-onlyshrooms}
     container_name: onlyshrooms
+    env_file:
+      - .env
     volumes:
       - onlyshrooms-data:/data
     expose:

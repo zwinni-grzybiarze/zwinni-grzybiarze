@@ -11,13 +11,18 @@ EXPOSE 8080
 ENV ConnectionStrings__Default="Data Source=/data/onlyshrooms.db"
 
 # Flutter web build. This stage is only used to produce static files.
-FROM ghcr.io/cirruslabs/flutter:stable AS frontend
+# Pin an exact version so rebuilds reuse the ~1.5GB layer (never :stable/:latest).
+# Cirrus Labs stopped publishing after 3.44.0 (May 2026); adrianjagielak continues
+# the same image tags — keep in sync with local `flutter --version`.
+FROM ghcr.io/adrianjagielak/flutter:3.47.9 AS frontend
 WORKDIR /src/frontend
 COPY src/frontend/pubspec.yaml src/frontend/pubspec.lock ./
 RUN flutter pub get
 COPY src/frontend/ ./
 # Empty API_BASE => same-origin requests (required for LAN phone / PWA installs).
-RUN flutter build web --release \
+# --pwa-strategy=none: avoid a caching service worker (stale UI after redeploy).
+RUN flutter build web --release --no-wasm-dry-run \
+    --pwa-strategy=none \
     --dart-define=USE_MOCK_DATA=false \
     --dart-define=API_BASE=
 
