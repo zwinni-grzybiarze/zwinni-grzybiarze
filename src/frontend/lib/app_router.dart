@@ -28,26 +28,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final current = ref.read(authControllerProvider);
       if (!current.ready) return null;
 
-      final uri = state.uri;
-      final decodedFragment = uri.fragment.isEmpty
-          ? ''
-          : Uri.decodeFull(uri.fragment);
-      final currentUrl = uri.toString();
-      final currentLocation = decodedFragment.isNotEmpty
-          ? decodedFragment
-          : uri.path.isEmpty
-              ? '/'
-              : uri.path;
-      final isAuthCallback = currentLocation.contains('/auth/callback') ||
-          currentUrl.contains('/auth/callback') ||
-          currentUrl.contains('auth/callback');
-      final isLogin = currentLocation.contains('/login') ||
-          currentUrl.contains('/login') ||
-          currentUrl.contains('login');
+      final matched = state.matchedLocation;
+      final isLogin = matched == '/login';
+      final isAuthCallback = matched == '/auth/callback';
 
       if (isAuthCallback) return null;
       if (!current.isSignedIn && !isLogin) return '/login';
-      if (current.isSignedIn && isLogin && !isAuthCallback) return '/';
+      if (current.isSignedIn && isLogin) return '/';
       return null;
     },
     routes: [

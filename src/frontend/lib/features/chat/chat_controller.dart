@@ -71,7 +71,8 @@ class ChatController extends ChangeNotifier {
   bool _viewingChat = false;
   DateTime? _lastReadAt;
 
-  static String _prefsKey(String roomId) => 'chat_last_read_at_$roomId';
+  static String _prefsKey(String roomId, String userId) =>
+      'chat_last_read_at_${roomId}_$userId';
 
   bool get hasUnread {
     final uid = _auth.user?.id;
@@ -123,8 +124,10 @@ class ChatController extends ChangeNotifier {
   }
 
   Future<void> _loadLastRead() async {
+    final userId = _auth.user?.id;
+    if (userId == null) return;
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_prefsKey(roomId));
+    final raw = prefs.getString(_prefsKey(roomId, userId));
     if (raw == null) return;
     _lastReadAt = DateTime.tryParse(raw)?.toUtc();
   }
@@ -150,8 +153,14 @@ class ChatController extends ChangeNotifier {
       return;
     }
     _lastReadAt = latest;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey(roomId), latest.toIso8601String());
+    final userId = _auth.user?.id;
+    if (userId != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _prefsKey(roomId, userId),
+        latest.toIso8601String(),
+      );
+    }
     notifyListeners();
   }
 
