@@ -71,11 +71,16 @@ export ONLYSHROOMS_IMAGE="$Tag"
 compose=(docker compose -p "$ProjectName" -f "$root/$ComposeFile")
 
 if [[ ! -f "$root/.env" ]]; then
-  echo "Missing $root/.env (required for Jwt__Secret and Google auth)." >&2
+  echo "Missing $root/.env (required for Jwt, Google, Frontend, SMTP)." >&2
   echo "Create it with at least:" >&2
   echo "  Jwt__Secret=..." >&2
   echo "  Authentication__Google__ClientId=..." >&2
   echo "  Authentication__Google__ClientSecret=..." >&2
+  echo "  Frontend__Url=..." >&2
+  echo "  Smtp__Host=smtp.eu.mailgun.org" >&2
+  echo "  Smtp__User=..." >&2
+  echo "  Smtp__Password=..." >&2
+  echo "  Smtp__From=..." >&2
   exit 1
 fi
 

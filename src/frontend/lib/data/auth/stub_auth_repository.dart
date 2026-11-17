@@ -52,7 +52,7 @@ class StubAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Grzybiarz> signInWithGoogle({bool register = false}) async {
+  Future<void> signInWithGoogle({bool register = false}) async {
     // Instant stub — no network. Random id/name so separate browser sessions
     // look like different chat users until a real users table / JWT exists.
     final suffix = Random().nextInt(0xffffff).toRadixString(16).padLeft(6, '0');
@@ -64,7 +64,6 @@ class StubAuthRepository implements AuthRepository {
     );
 
     await _saveSession(user, token: 'stub-google-token-${user.id}');
-    return user;
   }
 
   @override
@@ -80,6 +79,42 @@ class StubAuthRepository implements AuthRepository {
         );
 
     await _saveSession(user, token: token);
+  }
+
+  @override
+  Future<void> registerWithEmail({
+    required String email,
+    required String password,
+    required String imie,
+    required String nazwisko,
+  }) async {
+    throw UnsupportedError('Stub does not support email registration');
+  }
+
+  @override
+  Future<void> confirmEmail(String token) async {
+    throw UnsupportedError('Stub does not support email confirmation');
+  }
+
+  @override
+  Future<void> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    throw UnsupportedError('Stub does not support email login');
+  }
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    throw UnsupportedError('Stub does not support password reset');
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    throw UnsupportedError('Stub does not support password reset');
   }
 
   Future<void> _saveSession(Grzybiarz user, {required String token}) async {

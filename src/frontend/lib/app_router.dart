@@ -4,12 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/core/navigation.dart';
 import 'package:onlyshrooms/features/auth/auth_callback_page.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
+import 'package:onlyshrooms/features/auth/confirmed_page.dart';
 import 'package:onlyshrooms/features/auth/login_page.dart';
+import 'package:onlyshrooms/features/auth/reset_password_page.dart';
 import 'package:onlyshrooms/features/chat/chat_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/detail_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/edit_page.dart';
 import 'package:onlyshrooms/features/grzybobrania/list_page.dart';
 import 'package:onlyshrooms/features/profil/profil_page.dart';
+import 'package:onlyshrooms/features/profil/user_profile_page.dart';
+import 'package:onlyshrooms/features/profil/users_list_page.dart';
 import 'package:onlyshrooms/features/shell/main_shell.dart';
 import 'package:onlyshrooms/features/zadania/detail_page.dart';
 import 'package:onlyshrooms/features/zadania/edit_page.dart';
@@ -29,26 +33,80 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (!current.ready) return null;
 
       final matched = state.matchedLocation;
-      final isLogin = matched == '/login';
-      final isAuthCallback = matched == '/auth/callback';
+      final isPublicAuth = matched == '/login' ||
+          matched == '/register' ||
+          matched == '/auth/callback' ||
+          matched == '/auth/confirmed' ||
+          matched == '/auth/forgot-password' ||
+          matched == '/auth/reset-password';
 
-      if (isAuthCallback) return null;
-      if (!current.isSignedIn && !isLogin) return '/login';
-      if (current.isSignedIn && isLogin) return '/';
+      if (matched == '/register') {
+        return '/login?panel=register';
+      }
+      if (matched == '/auth/forgot-password') {
+        return '/login?panel=forgot';
+      }
+
+      if (isPublicAuth) {
+        if (current.isSignedIn && matched == '/login') {
+          return '/';
+        }
+        return null;
+      }
+      if (!current.isSignedIn) return '/login';
       return null;
     },
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginPage(),
+        pageBuilder: (context, state) {
+          final panel = switch (state.uri.queryParameters['panel']) {
+            'register' => AuthPanel.register,
+            'forgot' => AuthPanel.forgot,
+            _ => AuthPanel.login,
+          };
+          return noTransitionPage(
+            state: state,
+            child: LoginPage(initialPanel: panel),
+          );
+        },
       ),
+      // Kept for deep links / bookmarks; redirected to /login?panel=…
+      GoRoute(path: '/register', redirect: (_, _) => '/login?panel=register'),
       GoRoute(
         path: '/auth/callback',
-        builder: (context, state) => AuthCallbackPage(
-          token: state.uri.queryParameters['token'],
-          email: state.uri.queryParameters['email'],
+        pageBuilder: (context, state) => authTransitionPage(
+          state: state,
+          child: AuthCallbackPage(
+            token: state.uri.queryParameters['token'],
+            email: state.uri.queryParameters['email'],
+          ),
         ),
       ),
+      GoRoute(
+        path: '/auth/confirmed',
+        pageBuilder: (context, state) => authTransitionPage(
+          state: state,
+          child: ConfirmedPage(
+            token: state.uri.queryParameters['token'],
+            error: state.uri.queryParameters['error'] == '1',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/auth/forgot-password',
+        redirect: (_, _) => '/login?panel=forgot',
+      ),
+      GoRoute(
+        path: '/auth/reset-password',
+        pageBuilder: (context, state) => authTransitionPage(
+          state: state,
+          child: ResetPasswordPage(
+            token: state.uri.queryParameters['token'],
+          ),
+        ),
+      ),
+
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShell(navigationShell: navigationShell),
@@ -86,6 +144,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/uzytkownicy',
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: const UsersListPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/uzytkownicy/:id',
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: UserProfilePage(
+            userId: state.pathParameters['id']!,
+          ),
+        ),
       ),
       GoRoute(
         path: '/grzybobrania/new',

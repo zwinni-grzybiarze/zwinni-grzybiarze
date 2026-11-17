@@ -17,7 +17,8 @@ void main() {
   test('signInWithGoogle sets session instantly', () async {
     expect(auth.isSignedIn, isFalse);
 
-    final user = await auth.signInWithGoogle();
+    await auth.signInWithGoogle();
+    final user = auth.currentUser!;
     expect(auth.isSignedIn, isTrue);
     expect(user.id, matches(r'^stub-google-[0-9a-f]{6}$'));
     expect(user.email, matches(r'^demo-[0-9a-f]{6}@onlyshrooms\.app$'));
@@ -25,19 +26,21 @@ void main() {
   });
 
   test('signInWithGoogle assigns distinct ids across logins', () async {
-    final first = await auth.signInWithGoogle();
+    await auth.signInWithGoogle();
+    final firstId = auth.currentUser!.id;
     await auth.signOut();
-    final second = await auth.signInWithGoogle();
-    expect(second.id, isNot(first.id));
+    await auth.signInWithGoogle();
+    expect(auth.currentUser!.id, isNot(firstId));
   });
 
   test('register flag changes stub name', () async {
-    final user = await auth.signInWithGoogle(register: true);
-    expect(user.imie, 'Nowy');
+    await auth.signInWithGoogle(register: true);
+    expect(auth.currentUser!.imie, 'Nowy');
   });
 
   test('session restores after sign-in', () async {
-    final signedIn = await auth.signInWithGoogle();
+    await auth.signInWithGoogle();
+    final signedIn = auth.currentUser!;
     auth.dispose();
 
     final again = StubAuthRepository();

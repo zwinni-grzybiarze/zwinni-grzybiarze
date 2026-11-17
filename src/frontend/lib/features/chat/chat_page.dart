@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:onlyshrooms/app_theme.dart';
 import 'package:onlyshrooms/domain/chat_message.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/chat/chat_controller.dart';
@@ -87,7 +88,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     itemCount: ctrl.messages.length,
                     itemBuilder: (context, index) {
                       final message = ctrl.messages[index];
-                      final mine = message.senderId == currentUserId;
+                      final mine = _isMine(currentUserId, message.senderId);
                       return _ChatBubble(message: message, mine: mine);
                     },
                   ),
@@ -133,6 +134,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 }
 
+bool _isMine(String? currentUserId, String senderId) {
+  if (currentUserId == null ||
+      currentUserId.isEmpty ||
+      currentUserId == 'pending' ||
+      senderId.isEmpty) {
+    return false;
+  }
+  return currentUserId.trim() == senderId.trim();
+}
+
 class _ChatBubble extends StatelessWidget {
   const _ChatBubble({required this.message, required this.mine});
 
@@ -142,52 +153,62 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final alignment = mine ? Alignment.centerRight : Alignment.centerLeft;
     final bg = mine
-        ? theme.colorScheme.primaryContainer
-        : theme.colorScheme.surfaceContainerHighest;
-    final fg = mine
-        ? theme.colorScheme.onPrimaryContainer
-        : theme.colorScheme.onSurface;
+        ? OnlyShroomsTheme.moss.withValues(alpha: 0.88)
+        : Colors.white.withValues(alpha: 0.92);
+    final fg = mine ? OnlyShroomsTheme.cream : OnlyShroomsTheme.bark;
+    final radius = BorderRadius.only(
+      topLeft: const Radius.circular(16),
+      topRight: const Radius.circular(16),
+      bottomLeft: Radius.circular(mine ? 16 : 4),
+      bottomRight: Radius.circular(mine ? 4 : 16),
+    );
 
     final time =
         '${message.sentAt.toLocal().hour.toString().padLeft(2, '0')}:${message.sentAt.toLocal().minute.toString().padLeft(2, '0')}';
 
     return Align(
-      alignment: alignment,
+      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.8,
+          maxWidth: MediaQuery.sizeOf(context).width * 0.78,
         ),
-        child: Card(
-          color: bg,
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Column(
-              crossAxisAlignment:
-                  mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
+        child: Container(
+          margin: EdgeInsets.only(
+            top: 4,
+            bottom: 4,
+            left: mine ? 40 : 0,
+            right: mine ? 0 : 40,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: radius,
+          ),
+          child: Column(
+            crossAxisAlignment:
+                mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              if (!mine)
                 Text(
                   message.senderName.isEmpty ? 'Nieznany' : message.senderName,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: fg,
+                    color: fg.withValues(alpha: 0.85),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Text(
-                  message.body,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+              Text(
+                message.body,
+                style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: fg.withValues(alpha: 0.65),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  time,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: fg.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

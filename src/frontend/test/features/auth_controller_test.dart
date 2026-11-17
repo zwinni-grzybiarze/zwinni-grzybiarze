@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:onlyshrooms/data/auth/auth_repository.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
+import 'package:onlyshrooms/features/auth/password_rules.dart';
 
 void main() {
   late FakeAuthRepository repository;
@@ -85,6 +86,21 @@ void main() {
 
     expect(notifications, 1);
   });
+
+  test('confirmEmail delegates token to repository', () async {
+    await controller.confirmEmail('tok-123');
+    expect(repository.confirmedTokens, ['tok-123']);
+    expect(controller.busy, isFalse);
+  });
+
+  test('PasswordRules enforces min and max length', () {
+    expect(PasswordRules.validate('Haslo1234!'), isNull);
+    expect(PasswordRules.validate('Short1!'), isNotNull);
+    expect(
+      PasswordRules.validate('Aa1!${'x' * 130}'),
+      PasswordRules.requirementsMessage,
+    );
+  });
 }
 
 class FakeAuthRepository implements AuthRepository {
@@ -93,6 +109,7 @@ class FakeAuthRepository implements AuthRepository {
     const Grzybiarz(id: 'user-1', imie: 'Ada', nazwisko: 'Kowalska'),
   );
   final registerValues = <bool>[];
+  final confirmedTokens = <String>[];
   var restoreCalls = 0;
   var signOutCalls = 0;
 
@@ -113,13 +130,41 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Grzybiarz> signInWithGoogle({bool register = false}) {
+  Future<void> signInWithGoogle({bool register = false}) async {
     registerValues.add(register);
-    return signInResult;
+    await signInResult;
   }
 
   @override
   Future<void> completeGoogleLogin(String token, {String? email}) async {}
+
+  @override
+  Future<void> registerWithEmail({
+    required String email,
+    required String password,
+    required String imie,
+    required String nazwisko,
+  }) async {}
+
+  @override
+  Future<void> confirmEmail(String token) async {
+    confirmedTokens.add(token);
+  }
+
+  @override
+  Future<void> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {}
+
+  @override
+  Future<void> requestPasswordReset(String email) async {}
+
+  @override
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {}
 
   @override
   Future<void> signOut() async {

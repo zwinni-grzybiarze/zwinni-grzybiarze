@@ -1,10 +1,17 @@
 # OnlyShrooms
 ## Local docker deployment
 
-To run the application locally using Docker, use the following command:
+Full rebuild + start (removes any old `onlyshrooms` container first):
 
 ```bash
-docker compose up
+./run-lan.sh
 ```
 
-This will build the Docker image and start the containers. The application will be available at `http://localhost:8080`.
+Or equivalently:
+
+```bash
+docker rm -f onlyshrooms onlyshrooms-dev 2>/dev/null || true
+docker compose up --build --force-recreate --remove-orphans
+```
+
+App: `http://localhost:18000` (host port; avoids clash with Trilium on 8080).

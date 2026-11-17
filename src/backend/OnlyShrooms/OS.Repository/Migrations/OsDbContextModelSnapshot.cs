@@ -64,6 +64,17 @@ namespace OS.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("EmailConfirmed")
+                        .IsRequired()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("EmailConfirmationTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EmailConfirmationTokenExpiresUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Imie")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -74,7 +85,25 @@ namespace OS.Repository.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordResetTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiresUtc")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("EmailConfirmationTokenHash");
+
+                    b.HasIndex("PasswordResetTokenHash");
 
                     b.ToTable("Grzybiarze", (string)null);
                 });

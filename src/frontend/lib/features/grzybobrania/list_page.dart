@@ -38,6 +38,89 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
         .loadList(page: 0, nazwa: _searchCtrl.text);
   }
 
+  Future<void> _openStatusSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: OnlyShroomsTheme.cream,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final selected =
+                ref.watch(grzybobraniaControllerProvider).selectedStatuses;
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: OnlyShroomsTheme.bark.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                      child: Text(
+                        'Filtruj statusy',
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                              color: OnlyShroomsTheme.bark,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ),
+                    for (final status in GrzybobranieStatus.values)
+                      CheckboxListTile(
+                        value: selected.contains(status),
+                        title: Text(
+                          status.label,
+                          style: const TextStyle(
+                            color: OnlyShroomsTheme.bark,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        activeColor: OnlyShroomsTheme.moss,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        onChanged: (_) {
+                          ref
+                              .read(grzybobraniaControllerProvider.notifier)
+                              .toggleStatusFilter(status);
+                        },
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: OnlyShroomsTheme.moss,
+                          foregroundColor: OnlyShroomsTheme.cream,
+                        ),
+                        child: const Text('Gotowe'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ctrl = ref.watch(grzybobraniaControllerProvider);
@@ -92,15 +175,20 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
               ],
             ),
             const SizedBox(height: 8),
-            _StatusFilterChips(
-              selected: ctrl.selectedStatuses,
-              compact: compact,
-              onToggle: (status) {
-                ref
-                    .read(grzybobraniaControllerProvider.notifier)
-                    .toggleStatusFilter(status);
-              },
-            ),
+            if (compact)
+              _StatusFilterButton(
+                selected: ctrl.selectedStatuses,
+                onPressed: _openStatusSheet,
+              )
+            else
+              _StatusFilterChips(
+                selected: ctrl.selectedStatuses,
+                onToggle: (status) {
+                  ref
+                      .read(grzybobraniaControllerProvider.notifier)
+                      .toggleStatusFilter(status);
+                },
+              ),
             SizedBox(height: compact ? 12 : 16),
             if (ctrl.loading)
               const Expanded(
@@ -185,51 +273,62 @@ class _GrzybobraniaListPageState extends ConsumerState<GrzybobraniaListPage> {
   }
 }
 
+class _StatusFilterButton extends StatelessWidget {
+  const _StatusFilterButton({
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final Set<GrzybobranieStatus> selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final cream = OnlyShroomsTheme.cream;
+    final label = selected.isEmpty
+        ? 'Statusy: brak'
+        : selected.length == GrzybobranieStatus.values.length
+            ? 'Statusy: wszystkie'
+            : 'Statusy: ${selected.length} wybrane';
+
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(Icons.filter_list, color: cream, size: 20),
+      label: Text(label, style: TextStyle(color: cream)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: cream,
+        side: BorderSide(color: cream.withValues(alpha: 0.55)),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+  }
+}
+
 class _StatusFilterChips extends StatelessWidget {
   const _StatusFilterChips({
     required this.selected,
-    required this.compact,
     required this.onToggle,
   });
 
   final Set<GrzybobranieStatus> selected;
-  final bool compact;
   final ValueChanged<GrzybobranieStatus> onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final chips = GrzybobranieStatus.values.map((status) {
-      final isOn = selected.contains(status);
-      return FilterChip(
-        label: Text(
-          compact ? _shortStatus(status) : status.label,
-          style: TextStyle(fontSize: compact ? 12 : 13),
-        ),
-        selected: isOn,
-        visualDensity: VisualDensity.compact,
-        backgroundColor: OnlyShroomsTheme.inactiveFilterBackground,
-        onSelected: (_) => onToggle(status),
-      );
-    }).toList();
-
-    if (compact) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (var i = 0; i < chips.length; i++) ...[
-              if (i > 0) const SizedBox(width: 6),
-              chips[i],
-            ],
-          ],
-        ),
-      );
-    }
-
     return Wrap(
       spacing: 8,
       runSpacing: 4,
-      children: chips,
+      children: [
+        for (final status in GrzybobranieStatus.values)
+          FilterChip(
+            label: Text(status.label),
+            selected: selected.contains(status),
+            visualDensity: VisualDensity.compact,
+            backgroundColor: OnlyShroomsTheme.inactiveFilterBackground,
+            onSelected: (_) => onToggle(status),
+          ),
+      ],
     );
   }
 }
