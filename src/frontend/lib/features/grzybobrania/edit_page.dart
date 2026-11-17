@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:onlyshrooms/app_theme.dart';
+import 'package:onlyshrooms/core/navigation.dart';
 import 'package:onlyshrooms/core/responsive.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/status.dart';
@@ -46,7 +48,9 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
     final g = ctrl.selected;
     if (g != null && g.isArchived) {
       // Archived items are view-only — bounce deep links back to detail.
-      if (mounted) context.go('/grzybobrania/${g.id}');
+      if (mounted) {
+        popOrGo(context, '/grzybobrania/${g.id}');
+      }
       return;
     }
     if (g != null) {
@@ -124,7 +128,12 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
       final saved = await ref
           .read(grzybobraniaControllerProvider.notifier)
           .save(item, isNew: widget.isNew);
-      if (mounted) context.go('/grzybobrania/${saved.id}');
+      if (!mounted) return;
+      if (widget.isNew) {
+        context.pushReplacement('/grzybobrania/${saved.id}');
+      } else {
+        popOrGo(context, '/grzybobrania/${saved.id}');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -138,18 +147,28 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.isCompact;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isNew ? 'Nowe grzybobranie' : 'Edycja grzybobrania'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+        backgroundColor: OnlyShroomsTheme.forest,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        toolbarHeight: kToolbarHeight,
+        leading: BackButton(
           onPressed: () {
             if (widget.isNew) {
-              context.go('/');
+              popOrGo(context, '/');
             } else {
-              context.go('/grzybobrania/${widget.id}');
+              popOrGo(context, '/grzybobrania/${widget.id}');
             }
           },
+        ),
+        title: Text(
+          widget.isNew ? 'Nowe grzybobranie' : 'Edycja grzybobrania',
         ),
       ),
       body: _loading
@@ -157,11 +176,17 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
           : AdaptivePage(
               maxWidth: context.formMaxWidth,
               child: SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                child: Container(
+                  padding: context.pagePadding,
+                  decoration: BoxDecoration(
+                    color: OnlyShroomsTheme.detailPanelBackground,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                         TextFormField(
                           controller: _nazwa,
                           decoration: const InputDecoration(labelText: 'Nazwa'),
@@ -248,12 +273,13 @@ class _GrzybobranieEditPageState extends ConsumerState<GrzybobranieEditPage> {
                           ),
                         ),
                         // Extra space so FAB / keyboard don't cover the button.
-                        SizedBox(height: context.isCompact ? 24 : 8),
+                        SizedBox(height: compact ? 24 : 8),
                       ],
                     ),
                   ),
                 ),
               ),
+            ),
     );
   }
 }

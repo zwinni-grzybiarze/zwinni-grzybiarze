@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onlyshrooms/app_theme.dart';
+import 'package:onlyshrooms/core/navigation.dart';
 import 'package:onlyshrooms/core/responsive.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
@@ -55,23 +56,24 @@ class _GrzybobranieDetailPageState extends ConsumerState<GrzybobranieDetailPage>
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: OnlyShroomsTheme.detailBarBackground,
-        toolbarHeight: 48,
+        backgroundColor: OnlyShroomsTheme.forest,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        toolbarHeight: kToolbarHeight,
+        leading: BackButton(onPressed: () => popOrGo(context, '/')),
         title: Text(
-          g?.nazwa ?? 'Grzybobranie',
+          g?.nazwa != null ? 'Grzybobranie „${g!.nazwa}”' : 'Grzybobranie',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: compact ? 16 : 18),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
         ),
         actions: [
           if (g != null && !g.isArchived) ...[
             IconButton(
               tooltip: 'Edytuj',
-              onPressed: () => context.go('/grzybobrania/${g.id}/edit'),
+              onPressed: () => context.push('/grzybobrania/${g.id}/edit'),
               icon: const Icon(Icons.edit),
             ),
             IconButton(
@@ -87,6 +89,7 @@ class _GrzybobranieDetailPageState extends ConsumerState<GrzybobranieDetailPage>
           unselectedLabelColor: Colors.white70,
           indicatorColor: OnlyShroomsTheme.cream,
           indicatorWeight: 2,
+          dividerColor: Colors.transparent,
           labelStyle: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: compact ? 12 : 14,
@@ -122,18 +125,33 @@ class _GrzybobranieDetailPageState extends ConsumerState<GrzybobranieDetailPage>
           : AnimatedBuilder(
               animation: _tabs,
               builder: (context, child) {
-                if (_tabs.index != 1) return const SizedBox.shrink();
-                return compact
-                    ? FloatingActionButton(
-                        onPressed: () => _addZadanie(g.id),
-                        tooltip: 'Dodaj zadanie',
-                        child: const Icon(Icons.add),
-                      )
-                    : FloatingActionButton.extended(
-                        onPressed: () => _addZadanie(g.id),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Dodaj zadanie'),
-                      );
+                if (_tabs.index == 1) {
+                  return compact
+                      ? FloatingActionButton(
+                          onPressed: () => _addZadanie(g.id),
+                          tooltip: 'Dodaj zadanie',
+                          child: const Icon(Icons.add),
+                        )
+                      : FloatingActionButton.extended(
+                          onPressed: () => _addZadanie(g.id),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Dodaj zadanie'),
+                        );
+                }
+                if (_tabs.index == 2) {
+                  return compact
+                      ? FloatingActionButton(
+                          onPressed: () => _addMember(g.id),
+                          tooltip: 'Dodaj członka',
+                          child: const Icon(Icons.person_add),
+                        )
+                      : FloatingActionButton.extended(
+                          onPressed: () => _addMember(g.id),
+                          icon: const Icon(Icons.person_add),
+                          label: const Text('Dodaj członka'),
+                        );
+                }
+                return const SizedBox.shrink();
               },
             ),
       body: ctrl.detailLoading
@@ -159,7 +177,59 @@ class _GrzybobranieDetailPageState extends ConsumerState<GrzybobranieDetailPage>
         'returnToGrzybobranieId': grzybobranieId,
       },
     );
-    context.go(uri.toString());
+    context.push(uri.toString());
+  }
+
+  Future<void> _addMember(String grzybobranieId) async {
+    final imie = TextEditingController();
+    final nazwisko = TextEditingController();
+    final email = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dodaj członka'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: imie,
+                decoration: const InputDecoration(labelText: 'Imię'),
+              ),
+              TextField(
+                controller: nazwisko,
+                decoration: const InputDecoration(labelText: 'Nazwisko'),
+              ),
+              TextField(
+                controller: email,
+                decoration: const InputDecoration(labelText: 'E-mail'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Anuluj'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Dodaj'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    if (imie.text.trim().isEmpty || nazwisko.text.trim().isEmpty) return;
+    final member = Grzybiarz(
+      id: 'local-${DateTime.now().millisecondsSinceEpoch}',
+      imie: imie.text.trim(),
+      nazwisko: nazwisko.text.trim(),
+      email: email.text.trim().isEmpty ? null : email.text.trim(),
+    );
+    await ref
+        .read(grzybobraniaControllerProvider.notifier)
+        .addMember(grzybobranieId, member);
   }
 
   Future<void> _confirmDelete(Grzybobranie g) async {
@@ -185,7 +255,6 @@ class _GrzybobranieDetailPageState extends ConsumerState<GrzybobranieDetailPage>
     if (ok != true || !mounted) return;
 
     try {
-      // Future (#46): also archive related zadania once they have a status on BE.
       await ref.read(grzybobraniaControllerProvider.notifier).remove(g.id);
       if (!mounted) return;
       context.go('/');
@@ -379,7 +448,7 @@ class _ZadaniaTabState extends ConsumerState<_ZadaniaTab> {
                               path: '/zadania/${zadanie.id}',
                               queryParameters: {'returnTo': returnTo},
                             );
-                            context.go(taskLocation.toString());
+                            context.push(taskLocation.toString());
                           },
                         ),
                       );
@@ -406,118 +475,43 @@ class _MembersTab extends ConsumerWidget {
 
     return AdaptivePage(
       padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          if (!readOnly)
-            Padding(
-              padding: context.pagePadding.copyWith(bottom: 8),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: compact
-                    ? IconButton.filled(
-                        onPressed: () => _addMember(context, ref),
-                        tooltip: 'Dodaj członka',
-                        icon: const Icon(Icons.person_add),
-                      )
-                    : FilledButton.icon(
-                        onPressed: () => _addMember(context, ref),
-                        icon: const Icon(Icons.person_add),
-                        label: const Text('Dodaj członka'),
-                      ),
+      child: members.isEmpty
+          ? const Center(
+              child: Text(
+                'Brak członków',
+                style: TextStyle(color: OnlyShroomsTheme.cream),
               ),
-            ),
-          Expanded(
-            child: members.isEmpty
-                ? const Center(child: Text('Brak członków',style: TextStyle(color: OnlyShroomsTheme.cream)))
-                : ListView.separated(
-                    padding: context.pagePadding.copyWith(top: 0),
-                    itemCount: members.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 6),
-                    itemBuilder: (context, i) {
-                      final m = members[i];
-                      return Card(
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: compact ? 12 : 16,
-                            vertical: 4,
+            )
+          : ListView.separated(
+              padding: context.pagePadding,
+              itemCount: members.length,
+              separatorBuilder: (context, index) =>
+                  const SizedBox(height: 6),
+              itemBuilder: (context, i) {
+                final m = members[i];
+                return Card(
+                  child: ListTile(
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: compact ? 12 : 16,
+                      vertical: 4,
+                    ),
+                    leading: CircleAvatar(
+                      child: Text(m.imie.isNotEmpty ? m.imie[0] : '?'),
+                    ),
+                    title: Text(m.displayName),
+                    subtitle: Text(m.email ?? 'id: ${m.id}'),
+                    trailing: readOnly
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.person_remove_outlined),
+                            onPressed: () => ref
+                                .read(grzybobraniaControllerProvider.notifier)
+                                .removeMember(grzybobranieId, m.id),
                           ),
-                          leading: CircleAvatar(
-                            child: Text(m.imie.isNotEmpty ? m.imie[0] : '?'),
-                          ),
-                          title: Text(m.displayName),
-                          subtitle: Text(m.email ?? 'id: ${m.id}'),
-                          trailing: readOnly
-                              ? null
-                              : IconButton(
-                                  icon: const Icon(
-                                    Icons.person_remove_outlined,
-                                  ),
-                                  onPressed: () => ref
-                                      .read(
-                                        grzybobraniaControllerProvider.notifier,
-                                      )
-                                      .removeMember(grzybobranieId, m.id),
-                                ),
-                        ),
-                      );
-                    },
                   ),
-          ),
-        ],
-      ),
+                );
+              },
+            ),
     );
-  }
-
-  Future<void> _addMember(BuildContext context, WidgetRef ref) async {
-    final imie = TextEditingController();
-    final nazwisko = TextEditingController();
-    final email = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Dodaj członka'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: imie,
-                decoration: const InputDecoration(labelText: 'Imię'),
-              ),
-              TextField(
-                controller: nazwisko,
-                decoration: const InputDecoration(labelText: 'Nazwisko'),
-              ),
-              TextField(
-                controller: email,
-                decoration: const InputDecoration(labelText: 'E-mail'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Anuluj'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Dodaj'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    if (imie.text.trim().isEmpty || nazwisko.text.trim().isEmpty) return;
-    final member = Grzybiarz(
-      id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-      imie: imie.text.trim(),
-      nazwisko: nazwisko.text.trim(),
-      email: email.text.trim().isEmpty ? null : email.text.trim(),
-    );
-    await ref
-        .read(grzybobraniaControllerProvider.notifier)
-        .addMember(grzybobranieId, member);
   }
 }

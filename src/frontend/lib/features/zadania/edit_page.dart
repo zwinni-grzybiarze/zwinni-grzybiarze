@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:onlyshrooms/app_theme.dart';
+import 'package:onlyshrooms/core/navigation.dart';
 import 'package:onlyshrooms/core/responsive.dart';
 import 'package:onlyshrooms/domain/grzybobranie.dart';
 import 'package:onlyshrooms/domain/zadanie.dart';
@@ -108,18 +110,28 @@ class _ZadanieEditPageState extends ConsumerState<ZadanieEditPage> {
           .read(zadaniaControllerProvider.notifier)
           .save(item, isNew: widget.isNew);
       if (mounted) {
-        if (widget.returnToPath != null) {
-          context.go(
+        if (widget.returnToGrzybobranieId != null) {
+          final parentId = widget.returnToGrzybobranieId!;
+          popOrGo(context, '/grzybobrania/$parentId?tab=zadania');
+        } else if (widget.isNew) {
+          final location = Uri(
+            path: '/zadania/${saved.id}',
+            queryParameters: {
+              if (widget.returnToPath != null) 'returnTo': widget.returnToPath,
+            },
+          ).toString();
+          context.pushReplacement(location);
+        } else {
+          popOrGo(
+            context,
             Uri(
               path: '/zadania/${saved.id}',
-              queryParameters: {'returnTo': widget.returnToPath},
+              queryParameters: {
+                if (widget.returnToPath != null)
+                  'returnTo': widget.returnToPath,
+              },
             ).toString(),
           );
-        } else if (widget.returnToGrzybobranieId != null) {
-          final parentId = widget.returnToGrzybobranieId!;
-          context.go('/grzybobrania/$parentId?tab=zadania');
-        } else {
-          context.go('/zadania/${saved.id}');
         }
       }
     } catch (e) {
@@ -135,124 +147,149 @@ class _ZadanieEditPageState extends ConsumerState<ZadanieEditPage> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.isCompact;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isNew ? 'Nowe zadanie' : 'Edycja zadania'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+        backgroundColor: OnlyShroomsTheme.forest,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        toolbarHeight: kToolbarHeight,
+        leading: BackButton(
           onPressed: () {
             if (widget.isNew) {
-              context.go(widget.returnToPath ?? '/zadania');
-            } else {
-              final location = Uri(
-                path: '/zadania/${widget.id}',
-                queryParameters: {
-                  if (widget.returnToPath != null)
-                    'returnTo': widget.returnToPath!,
-                },
+              popOrGo(
+                context,
+                widget.returnToPath ??
+                    (widget.returnToGrzybobranieId != null
+                        ? '/grzybobrania/${widget.returnToGrzybobranieId}?tab=zadania'
+                        : '/zadania'),
               );
-              context.go(location.toString());
+            } else {
+              popOrGo(
+                context,
+                Uri(
+                  path: '/zadania/${widget.id}',
+                  queryParameters: {
+                    if (widget.returnToPath != null)
+                      'returnTo': widget.returnToPath!,
+                  },
+                ).toString(),
+              );
             }
           },
         ),
+        title: Text(widget.isNew ? 'Nowe zadanie' : 'Edycja zadania'),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : AdaptivePage(
               maxWidth: context.formMaxWidth,
               child: SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: _nazwa,
-                        decoration: const InputDecoration(labelText: 'Nazwa'),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Wymagane' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _opis,
-                        decoration: const InputDecoration(labelText: 'Opis'),
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        // ignore: deprecated_member_use
-                        value: _grzybobranieSelection,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Grzybobranie (opcjonalnie)',
+                child: Container(
+                  padding: context.pagePadding,
+                  decoration: BoxDecoration(
+                    color: OnlyShroomsTheme.detailPanelBackground,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _nazwa,
+                          decoration: const InputDecoration(labelText: 'Nazwa'),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Wymagane'
+                              : null,
                         ),
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: '',
-                            child: Text('Bez grzybobrania'),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _opis,
+                          decoration: const InputDecoration(labelText: 'Opis'),
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          // ignore: deprecated_member_use
+                          value: _grzybobranieSelection,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Grzybobranie (opcjonalnie)',
                           ),
-                          ..._grzybobrania.map(
-                            (g) => DropdownMenuItem<String>(
-                              value: g.id,
-                              child: Text(
-                                g.nazwa,
-                                overflow: TextOverflow.ellipsis,
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: '',
+                              child: Text('Bez grzybobrania'),
+                            ),
+                            ..._grzybobrania.map(
+                              (g) => DropdownMenuItem<String>(
+                                value: g.id,
+                                child: Text(
+                                  g.nazwa,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
-                          ),
-                          if (_grzybobranieSelection.isNotEmpty &&
-                              !_grzybobrania.any(
-                                (g) => g.id == _grzybobranieSelection,
-                              ))
-                            DropdownMenuItem<String>(
-                              value: _grzybobranieSelection,
-                              child: Text(
-                                'Grzybobranie ($_grzybobranieSelection)',
+                            if (_grzybobranieSelection.isNotEmpty &&
+                                !_grzybobrania.any(
+                                  (g) => g.id == _grzybobranieSelection,
+                                ))
+                              DropdownMenuItem<String>(
+                                value: _grzybobranieSelection,
+                                child: Text(
+                                  'Grzybobranie ($_grzybobranieSelection)',
+                                ),
                               ),
+                          ],
+                          onChanged: (value) => setState(
+                            () => _grzybobranieSelection = value ?? '',
+                          ),
+                        ),
+                        if (_grzybobraniaError != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Nie udało się wczytać grzybobrań: '
+                            '$_grzybobraniaError',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
                             ),
+                          ),
                         ],
-                        onChanged: (value) => setState(
-                          () => _grzybobranieSelection = value ?? '',
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<ZadanieStatus>(
+                          // ignore: deprecated_member_use
+                          value: _status,
+                          decoration:
+                              const InputDecoration(labelText: 'Status'),
+                          items: ZadanieStatus.values
+                              .map(
+                                (s) => DropdownMenuItem(
+                                  value: s,
+                                  child: Text(s.label),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (v) {
+                            if (v != null) setState(() => _status = v);
+                          },
                         ),
-                      ),
-                      if (_grzybobraniaError != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Nie udało się wczytać grzybobrań: '
-                          '$_grzybobraniaError',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: _saving ? null : _save,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Text(_saving ? 'Zapisywanie…' : 'Zapisz'),
                           ),
                         ),
+                        // Extra space so FAB / keyboard don't cover the button.
+                        SizedBox(height: compact ? 24 : 8),
                       ],
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<ZadanieStatus>(
-                        // ignore: deprecated_member_use
-                        value: _status,
-                        decoration: const InputDecoration(labelText: 'Status'),
-                        items: ZadanieStatus.values
-                            .map(
-                              (s) => DropdownMenuItem(
-                                value: s,
-                                child: Text(s.label),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) setState(() => _status = v);
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: _saving ? null : _save,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Text(_saving ? 'Zapisywanie…' : 'Zapisz'),
-                        ),
-                      ),
-                      // Extra space so FAB / keyboard don't cover the button.
-                      SizedBox(height: context.isCompact ? 24 : 8),
-                    ],
+                    ),
                   ),
                 ),
               ),

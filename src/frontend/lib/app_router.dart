@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:onlyshrooms/core/navigation.dart';
+import 'package:onlyshrooms/features/auth/auth_callback_page.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
 import 'package:onlyshrooms/features/auth/login_page.dart';
 import 'package:onlyshrooms/features/chat/chat_page.dart';
@@ -19,38 +21,33 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final auth = ref.read(authControllerProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/login',
     refreshListenable: auth,
     redirect: (context, state) {
       final current = ref.read(authControllerProvider);
       if (!current.ready) return null;
 
-      final uri = state.uri;
-      final decodedFragment = uri.fragment.isEmpty
-          ? ''
-          : Uri.decodeFull(uri.fragment);
-      final currentUrl = uri.toString();
-      final currentLocation = decodedFragment.isNotEmpty
-          ? decodedFragment
-          : uri.path.isEmpty
-              ? '/'
-              : uri.path;
-      final isAuthCallback = currentLocation.contains('/auth/callback') ||
-          currentUrl.contains('/auth/callback') ||
-          currentUrl.contains('auth/callback');
-      final isLogin = currentLocation.contains('/login') ||
-          currentUrl.contains('/login') ||
-          currentUrl.contains('login');
+      final matched = state.matchedLocation;
+      final isLogin = matched == '/login';
+      final isAuthCallback = matched == '/auth/callback';
 
       if (isAuthCallback) return null;
       if (!current.isSignedIn && !isLogin) return '/login';
-      if (current.isSignedIn && isLogin && !isAuthCallback) return '/';
+      if (current.isSignedIn && isLogin) return '/';
       return null;
     },
     routes: [
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/auth/callback',
+        builder: (context, state) => AuthCallbackPage(
+          token: state.uri.queryParameters['token'],
+          email: state.uri.queryParameters['email'],
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
@@ -92,41 +89,58 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/grzybobrania/new',
-        builder: (context, state) => const GrzybobranieEditPage(),
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: const GrzybobranieEditPage(),
+        ),
       ),
       GoRoute(
         path: '/grzybobrania/:id',
-        builder: (context, state) => GrzybobranieDetailPage(
-          id: state.pathParameters['id']!,
-          initialTab: state.uri.queryParameters['tab'] == 'zadania' ? 1 : 0,
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: GrzybobranieDetailPage(
+            id: state.pathParameters['id']!,
+            initialTab: state.uri.queryParameters['tab'] == 'zadania' ? 1 : 0,
+          ),
         ),
       ),
       GoRoute(
         path: '/grzybobrania/:id/edit',
-        builder: (context, state) =>
-            GrzybobranieEditPage(id: state.pathParameters['id']),
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: GrzybobranieEditPage(id: state.pathParameters['id']),
+        ),
       ),
       GoRoute(
         path: '/zadania/new',
-        builder: (context, state) => ZadanieEditPage(
-          initialGrzybobranieId: state.uri.queryParameters['grzybobranieId'],
-          returnToGrzybobranieId:
-              state.uri.queryParameters['returnToGrzybobranieId'],
-          returnToPath: state.uri.queryParameters['returnTo'],
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: ZadanieEditPage(
+            initialGrzybobranieId: state.uri.queryParameters['grzybobranieId'],
+            returnToGrzybobranieId:
+                state.uri.queryParameters['returnToGrzybobranieId'],
+            returnToPath: state.uri.queryParameters['returnTo'],
+          ),
         ),
       ),
       GoRoute(
         path: '/zadania/:id',
-        builder: (context, state) => ZadanieDetailPage(
-          id: state.pathParameters['id']!,
-          returnToPath: state.uri.queryParameters['returnTo'],
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: ZadanieDetailPage(
+            id: state.pathParameters['id']!,
+            returnToPath: state.uri.queryParameters['returnTo'],
+          ),
         ),
       ),
       GoRoute(
         path: '/zadania/:id/edit',
-        builder: (context, state) => ZadanieEditPage(
-          id: state.pathParameters['id'],
-          returnToPath: state.uri.queryParameters['returnTo'],
+        pageBuilder: (context, state) => noTransitionPage(
+          state: state,
+          child: ZadanieEditPage(
+            id: state.pathParameters['id'],
+            returnToPath: state.uri.queryParameters['returnTo'],
+          ),
         ),
       ),
     ],

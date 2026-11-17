@@ -47,12 +47,12 @@ class _ZadaniaListPageState extends ConsumerState<ZadaniaListPage> {
     return Scaffold(
       floatingActionButton: compact
           ? FloatingActionButton(
-              onPressed: () => context.go('/zadania/new'),
+              onPressed: () => context.push('/zadania/new'),
               tooltip: 'Nowe zadanie',
               child: const Icon(Icons.add),
             )
           : FloatingActionButton.extended(
-              onPressed: () => context.go('/zadania/new'),
+              onPressed: () => context.push('/zadania/new'),
               icon: const Icon(Icons.add),
               label: const Text('Nowe zadanie'),
             ),
@@ -60,68 +60,37 @@ class _ZadaniaListPageState extends ConsumerState<ZadaniaListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: OnlyShroomsTheme.inactiveFilterBackground,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    'Zadania',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: compact ? 22 : null,
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Szukaj po nazwie…',
+                      prefixIcon: const Icon(Icons.search),
+                      isDense: compact,
                     ),
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _runSearch(),
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: compact ? 10 : 12),
-            if (compact) ...[
-              TextField(
-                controller: _searchCtrl,
-                decoration: const InputDecoration(
-                  hintText: 'Szukaj po nazwie…',
-                  prefixIcon: Icon(Icons.search),
-                  isDense: true,
-                ),
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => _runSearch(),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _runSearch,
-                  child: const Text('Szukaj'),
-                ),
-              ),
-            ] else
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchCtrl,
-                      decoration: const InputDecoration(
-                        hintText: 'Szukaj po nazwie…',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onSubmitted: (_) => _runSearch(),
+                const SizedBox(width: 8),
+                if (compact)
+                  FilledButton(
+                    onPressed: _runSearch,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      padding: EdgeInsets.zero,
                     ),
-                  ),
-                  const SizedBox(width: 8),
+                    child: const Icon(Icons.search),
+                  )
+                else
                   FilledButton(
                     onPressed: _runSearch,
                     child: const Text('Szukaj'),
                   ),
-                ],
-              ),
+              ],
+            ),
             SizedBox(height: compact ? 12 : 16),
             if (ctrl.loading)
               const Expanded(
@@ -243,7 +212,7 @@ class _ZadanieTile extends StatelessWidget {
                 padding: compact ? EdgeInsets.zero : null,
                 backgroundColor: _statusColor(status).withValues(alpha: 0.15),
               ),
-        onTap: () => context.go('/zadania/${item.id}'),
+        onTap: () => context.push('/zadania/${item.id}'),
       ),
     );
   }

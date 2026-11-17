@@ -13,12 +13,14 @@ class ChatPage extends ConsumerStatefulWidget {
 
 class _ChatPageState extends ConsumerState<ChatPage> {
   final _inputCtrl = TextEditingController();
+  final _inputFocus = FocusNode();
   final _scrollCtrl = ScrollController();
   int _lastMessageCount = 0;
 
   @override
   void dispose() {
     _inputCtrl.dispose();
+    _inputFocus.dispose();
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -34,12 +36,19 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     });
   }
 
+  void _keepInputFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _inputFocus.requestFocus();
+    });
+  }
+
   Future<void> _send() async {
     final ctrl = ref.read(chatControllerProvider);
     if (ctrl.sending || !ctrl.connected) return;
     final text = _inputCtrl.text;
     final ok = await ref.read(chatControllerProvider.notifier).send(text);
     if (ok) _inputCtrl.clear();
+    _keepInputFocus();
   }
 
   @override
@@ -55,22 +64,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     return Scaffold(
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Row(
-              children: [
-                Text('Chat', style: Theme.of(context).textTheme.titleMedium),
-                const Spacer(),
-                Icon(
-                  ctrl.connected ? Icons.circle : Icons.circle_outlined,
-                  size: 12,
-                  color: ctrl.connected
-                      ? Colors.green
-                      : Theme.of(context).disabledColor,
-                ),
-              ],
-            ),
-          ),
           if (ctrl.error != null)
             MaterialBanner(
               content: Text(ctrl.error!),
@@ -107,6 +100,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   Expanded(
                     child: TextField(
                       controller: _inputCtrl,
+                      focusNode: _inputFocus,
                       minLines: 1,
                       maxLines: 4,
                       textInputAction: TextInputAction.send,

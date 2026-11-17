@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:onlyshrooms/app_theme.dart';
 import 'package:onlyshrooms/features/auth/auth_controller.dart';
 
 class ProfilPage extends ConsumerWidget {
@@ -10,6 +11,7 @@ class ProfilPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
+    final cream = OnlyShroomsTheme.cream;
 
     return Scaffold(
       body: SafeArea(
@@ -25,14 +27,18 @@ class ProfilPage extends ConsumerWidget {
                       if (user != null) ...[
                         Text(
                           user.displayName,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(color: cream),
                           textAlign: TextAlign.center,
                         ),
                         if (user.email != null) ...[
                           const SizedBox(height: 4),
                           Text(
                             user.email!,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                              color: cream.withValues(alpha: 0.9),
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -40,12 +46,14 @@ class ProfilPage extends ConsumerWidget {
                       ],
                       Text(
                         'Wkrótce',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(color: cream),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Profil użytkownika będzie dostępny wkrótce.',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: cream.withValues(alpha: 0.9)),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
@@ -66,7 +74,9 @@ class ProfilPage extends ConsumerWidget {
               Text(
                 'Mushroom icons created by Magnific - Flaticon',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: cream.withValues(alpha: 0.7),
+                ),
               ),
             ],
           ),
