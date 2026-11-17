@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Full local rebuild + start via compose.yml (HTTP :18000 → container :8080).
+# Full local rebuild + start via compose.yml (HTTP :8080).
 # Removes any existing container named onlyshrooms so the name never conflicts.
 set -euo pipefail
 
@@ -25,7 +25,7 @@ echo "==> Removing old containers (onlyshrooms / onlyshrooms-dev) if present"
 docker rm -f onlyshrooms onlyshrooms-dev >/dev/null 2>&1 || true
 
 lan_ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
-echo "==> Building and starting local stack (HTTP on :18000)"
-[[ -n "$lan_ip" ]] && echo "    Phone URL: http://${lan_ip}:18000"
+echo "==> Building and starting local stack (HTTP on :8080)"
+[[ -n "$lan_ip" ]] && echo "    Phone URL: http://${lan_ip}:8080"
 
 docker compose -f "$root/compose.yml" up --build --force-recreate --remove-orphans

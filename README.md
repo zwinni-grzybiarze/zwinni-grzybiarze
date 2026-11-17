@@ -14,4 +14,4 @@ docker rm -f onlyshrooms onlyshrooms-dev 2>/dev/null || true
 docker compose up --build --force-recreate --remove-orphans
 ```
 
-App: `http://localhost:18000` (host port; avoids clash with Trilium on 8080).
+App: `http://localhost:8080`.
