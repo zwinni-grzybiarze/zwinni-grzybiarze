@@ -1,0 +1,32 @@
+# Parallel test instance beside compose.live.yml (develop on :18080).
+# Deploy: ./deploy-live.sh --devtest
+#
+# cloudflared → grzyby-test.ohmmycode.dev → 127.0.0.1:21370 → onlyshrooms-devtest:8080
+# Host loopback check: http://127.0.0.1:21370/
+#
+# Shares .env secrets; overrides Frontend__Url; separate SQLite volume.
+
+services:
+  onlyshrooms:
+    image: ${ONLYSHROOMS_IMAGE:-onlyshrooms-devtest}
+    container_name: onlyshrooms-devtest
+    env_file:
+      - .env
+    environment:
+      Frontend__Url: https://grzyby-test.ohmmycode.dev
+    volumes:
+      - onlyshrooms-devtest-data:/data
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:21370:8080"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+volumes:
+  onlyshrooms-devtest-data:
+
+networks:
+  proxy:
+    external: true
