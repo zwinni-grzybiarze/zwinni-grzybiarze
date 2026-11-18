@@ -92,13 +92,7 @@ lib/
 
 ## Routes
 
-| Path | Screen |
-|------|--------|
-| `/login` | Stub Google login / register |
-| `/` | Grzybobrania list (search + pagination) |
-| `/grzybobrania/new` | Create |
-| `/grzybobrania/:id` | Detail (tabs: info, tasks, members) |
-| `/grzybobrania/:id/edit` | Edit |
+Full table (shell tabs, auth, overlays, query params): [`doc/app-shape.md`](doc/app-shape.md#routing).
 
 Unauthenticated users are redirected to `/login` (`go_router` + auth `refreshListenable`).
 
@@ -125,9 +119,17 @@ GET/POST/DELETE   /api/grzybobrania/{id}/czlonkowie[/{grzybiarzId}]
 - `/login` Google buttons call **`StubAuthRepository`** - no Google SDK, instant fake session.
 - Real Google OAuth + tokens are **next sprint** (issues #8 / #39); keep implementing behind `AuthRepository`.
 
+## App shape (design, routing, conventions)
+
+Shared guide for humans and any IDE/agent:
+
+→ **[`doc/app-shape.md`](doc/app-shape.md)**
+
+Theme, shell chrome, full route table, navigation rules, responsive layout, and list/detail/edit patterns. Keep that doc in sync when you add screens or routes.
+
 ## Responsive UI
 
-Breakpoints in `lib/core/responsive.dart`:
+Breakpoints in `lib/core/responsive.dart` (details in `doc/app-shape.md`):
 
 - **compact** `< 600` - phones / narrow pane  
 - **medium** `600–1023`  
