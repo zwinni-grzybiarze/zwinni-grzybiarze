@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -7,19 +8,7 @@ import 'package:onlyshrooms/data/auth/auth_repository.dart';
 import 'package:onlyshrooms/domain/grzybiarz.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Google OAuth implementation (backend-driven flow).
-///
-/// Login flow:
-///   1. [signInWithGoogle] navigates the **current tab** to
-///      `GET /api/auth/google/login` on the backend.
-///   2. The backend challenges Google, which redirects the user through the
-///      consent screen and back to `GET /api/auth/google/callback`.
-///   3. The backend mints a JWT and redirects the browser to
-///      `{frontendUrl}/#/auth/callback?token=<jwt>&email=<email>`.
-///   4. [AuthCallbackPage] picks up the callback and calls
-///      [completeGoogleLogin] with the received JWT.
-///   5. The JWT is stored in [FlutterSecureStorage] under key `jwt` so that
-///      [createApiClient] can attach it as a Bearer header on every request.
+/// Backend-driven auth: Google OAuth + email/password.
 class GoogleAuthRepository implements AuthRepository {
   GoogleAuthRepository(this._dio);
 
@@ -30,8 +19,6 @@ class GoogleAuthRepository implements AuthRepository {
   final _controller = StreamController<Grzybiarz?>.broadcast();
   Grzybiarz? _user;
 
-  // ── AuthRepository ──────────────────────────────────────────────────────────
-
   @override
   Grzybiarz? get currentUser => _user;
 
@@ -40,8 +27,6 @@ class GoogleAuthRepository implements AuthRepository {
 
   @override
   Stream<Grzybiarz?> get authStateChanges => _controller.stream;
-
-  // ── Session ─────────────────────────────────────────────────────────────────
 
   @override
   Future<void> restoreSession() async {
@@ -56,46 +41,132 @@ class GoogleAuthRepository implements AuthRepository {
       _user = Grzybiarz.fromJson(data);
       _controller.add(_user);
     } on DioException {
-      // Token may be expired; silently clear so the user is prompted to log in.
       await _storage.delete(key: _jwtKey);
     }
   }
 
-  // ── Sign-in ──────────────────────────────────────────────────────────────────
-
   @override
   Future<void> signInWithGoogle({bool register = false}) async {
     final base = AppConfig.apiBase;
-    // Backend route: GET /api/auth/google/login  (register uses same flow for now)
     final uri = Uri.parse('$base/api/auth/google/login');
 
-    // On web, navigate the current tab/window (_self) rather than opening a new tab.
     if (!await launchUrl(
       uri,
       webOnlyWindowName: '_self',
     )) {
       throw StateError('Could not launch $uri');
     }
-    // Sign-in is completed via [completeGoogleLogin] when the backend
-    // redirects back to /#/auth/callback?token=<jwt>&email=<email>.
   }
 
   @override
   Future<void> completeGoogleLogin(String token, {String? email}) async {
+    await _persistTokenAndLoadMe(token, email: email);
+  }
+
+  @override
+  Future<void> registerWithEmail({
+    required String email,
+    required String password,
+    required String imie,
+    required String nazwisko,
+  }) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/auth/register',
+        data: {
+          'email': email,
+          'password': password,
+          'imie': imie,
+          'nazwisko': nazwisko,
+        },
+      );
+    } on DioException catch (e) {
+      throw StateError(_dioMessage(e, 'Rejestracja nie powiodła się.'));
+    }
+  }
+
+  @override
+  Future<void> confirmEmail(String token) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/auth/confirm-email',
+        data: {'token': token},
+      );
+    } on DioException catch (e) {
+      throw StateError(
+        _dioMessage(e, 'Link potwierdzenia jest nieprawidłowy lub wygasł.'),
+      );
+    }
+  }
+
+  @override
+  Future<void> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/api/auth/login',
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+      final data = response.data;
+      final token = data?['token'] as String?;
+      if (token == null || token.isEmpty) {
+        throw StateError('Brak tokenu w odpowiedzi logowania.');
+      }
+      await _persistTokenAndLoadMe(token, email: data?['email'] as String?);
+    } on DioException catch (e) {
+      throw StateError(_dioMessage(e, 'Logowanie nie powiodło się.'));
+    }
+  }
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/auth/forgot-password',
+        data: {'email': email},
+      );
+    } on DioException catch (e) {
+      throw StateError(_dioMessage(e, 'Nie udało się wysłać resetu hasła.'));
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/auth/reset-password',
+        data: {
+          'token': token,
+          'newPassword': newPassword,
+        },
+      );
+    } on DioException catch (e) {
+      throw StateError(_dioMessage(e, 'Reset hasła nie powiódł się.'));
+    }
+  }
+
+  @override
+  Future<void> signOut() async {
+    _user = null;
+    await _storage.delete(key: _jwtKey);
+    _controller.add(null);
+  }
+
+  Future<void> _persistTokenAndLoadMe(String token, {String? email}) async {
     if (token.trim().isEmpty) return;
 
     await _storage.write(key: _jwtKey, value: token);
 
-    // Optimistically build a local user object from what the callback gave us,
-    // then refresh from the server in the background.
-    _user = Grzybiarz(
-      id: 'pending',
-      imie: '',
-      nazwisko: '',
-      email: email,
-    );
-    _controller.add(_user);
-
+    // Resolve the real user before notifying signed-in state. Emitting a
+    // placeholder "pending" id first made chat connect with the wrong senderId.
     try {
       final response =
           await _dio.get<Map<String, dynamic>>('/api/grzybiarze/me');
@@ -103,19 +174,75 @@ class GoogleAuthRepository implements AuthRepository {
       if (data != null) {
         _user = Grzybiarz.fromJson(data);
         _controller.add(_user);
+        return;
       }
-    } on DioException {
-      // Keep the optimistic user; the next /me call will fix it.
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 401 || status == 403 || status == 404) {
+        _user = null;
+        await _storage.delete(key: _jwtKey);
+        throw StateError('Sesja jest nieprawidłowa lub wygasła.');
+      }
+      // Fall through to JWT claims only on transient network / 5xx errors.
+    }
+
+    final fromJwt = _grzybiarzFromJwt(token, fallbackEmail: email);
+    if (fromJwt != null) {
+      _user = fromJwt;
+      _controller.add(_user);
     }
   }
 
-  // ── Sign-out ─────────────────────────────────────────────────────────────────
+  /// Reads NameIdentifier / name / email claims when `/me` is unavailable.
+  static Grzybiarz? _grzybiarzFromJwt(String token, {String? fallbackEmail}) {
+    final payload = _decodeJwtPayload(token);
+    if (payload == null) return null;
 
-  @override
-  Future<void> signOut() async {
-    _user = null;
-    await _storage.delete(key: _jwtKey);
-    _controller.add(null);
+    const nameId =
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
+    const givenName =
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname';
+    const surname =
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname';
+    const emailClaim =
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
+
+    final id = (payload[nameId] ?? payload['sub'])?.toString();
+    if (id == null || id.isEmpty) return null;
+
+    return Grzybiarz(
+      id: id,
+      imie: (payload[givenName] ?? '').toString(),
+      nazwisko: (payload[surname] ?? '').toString(),
+      email: (payload[emailClaim] ?? payload['email'] ?? fallbackEmail)
+          ?.toString(),
+    );
+  }
+
+  static Map<String, dynamic>? _decodeJwtPayload(String token) {
+    final parts = token.split('.');
+    if (parts.length != 3) return null;
+    try {
+      final normalized = base64Url.normalize(parts[1]);
+      final json = utf8.decode(base64Url.decode(normalized));
+      final decoded = jsonDecode(json);
+      return decoded is Map<String, dynamic>
+          ? decoded
+          : decoded is Map
+              ? Map<String, dynamic>.from(decoded)
+              : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static String _dioMessage(DioException e, String fallback) {
+    final data = e.response?.data;
+    if (data is Map) {
+      final message = data['message'] ?? data['detail'] ?? data['title'];
+      if (message is String && message.trim().isNotEmpty) return message;
+    }
+    return fallback;
   }
 
   void dispose() {

@@ -19,18 +19,23 @@ class ChatMessage {
   final DateTime sentAt;
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    final id = (json['chatMessageId'] ?? json['id']).toString();
-    final sentAtRaw = json['sentAt'];
+    final id = (json['chatMessageId'] ??
+            json['ChatMessageId'] ??
+            json['id'] ??
+            json['Id'])
+        .toString();
+    final sentAtRaw = json['sentAt'] ?? json['SentAt'];
     final sentAt = sentAtRaw is DateTime
         ? sentAtRaw.toUtc()
         : DateTime.parse(sentAtRaw.toString()).toUtc();
 
     return ChatMessage(
       id: id,
-      roomId: (json['roomId'] as String?) ?? kGlobalChatRoomId,
-      senderId: (json['senderId'] as String?) ?? '',
-      senderName: (json['senderName'] as String?) ?? '',
-      body: (json['body'] as String?) ?? '',
+      roomId: (json['roomId'] ?? json['RoomId'])?.toString() ??
+          kGlobalChatRoomId,
+      senderId: (json['senderId'] ?? json['SenderId'])?.toString() ?? '',
+      senderName: (json['senderName'] ?? json['SenderName'])?.toString() ?? '',
+      body: (json['body'] ?? json['Body'])?.toString() ?? '',
       sentAt: sentAt,
     );
   }

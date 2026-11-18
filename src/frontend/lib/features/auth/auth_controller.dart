@@ -24,9 +24,11 @@ class AuthController extends ChangeNotifier {
   StreamSubscription<Grzybiarz?>? _sub;
   bool _ready = false;
   bool _busy = false;
+  String? _error;
 
   bool get ready => _ready;
   bool get busy => _busy;
+  String? get error => _error;
   bool get isSignedIn => _auth.isSignedIn;
   Grzybiarz? get user => _auth.currentUser;
 
@@ -39,9 +41,13 @@ class AuthController extends ChangeNotifier {
 
   Future<void> signInWithGoogle({bool register = false}) async {
     _busy = true;
+    _error = null;
     notifyListeners();
     try {
       await _auth.signInWithGoogle(register: register);
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
     } finally {
       _busy = false;
       notifyListeners();
@@ -51,6 +57,97 @@ class AuthController extends ChangeNotifier {
   Future<void> completeGoogleLogin(String token, {String? email}) async {
     await _auth.completeGoogleLogin(token, email: email);
     notifyListeners();
+  }
+
+  Future<void> registerWithEmail({
+    required String email,
+    required String password,
+    required String imie,
+    required String nazwisko,
+  }) async {
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.registerWithEmail(
+        email: email,
+        password: password,
+        imie: imie,
+        nazwisko: nazwisko,
+      );
+    } catch (e) {
+      _error = e.toString().replaceFirst('Bad state: ', '');
+      rethrow;
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> confirmEmail(String token) async {
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.confirmEmail(token);
+    } catch (e) {
+      _error = e.toString().replaceFirst('Bad state: ', '');
+      rethrow;
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.loginWithEmail(email: email, password: password);
+    } catch (e) {
+      _error = e.toString().replaceFirst('Bad state: ', '');
+      rethrow;
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> requestPasswordReset(String email) async {
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.requestPasswordReset(email);
+    } catch (e) {
+      _error = e.toString().replaceFirst('Bad state: ', '');
+      rethrow;
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.resetPassword(token: token, newPassword: newPassword);
+    } catch (e) {
+      _error = e.toString().replaceFirst('Bad state: ', '');
+      rethrow;
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
   }
 
   Future<void> signOut() async {

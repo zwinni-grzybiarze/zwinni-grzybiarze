@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -5,8 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OS.Interfaces.Services;
 
 namespace OS.WebApi.IntegrationTests;
 
@@ -15,14 +18,22 @@ public class ApiFactory : WebApplicationFactory<Program>
     private const string TestAuthScheme = "Test";
     private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"os-tests-{Guid.NewGuid():N}.db");
 
+    public RecordingEmailSender Emails { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", $"Data Source={_databasePath}");
-        builder.UseSetting("Jwt:Secret", "dummy-key");
+        builder.UseSetting("Jwt:Secret", "integration-test-jwt-secret-key-32b!");
         builder.UseSetting("Authentication:Google:ClientId", "test-google-client-id");
         builder.UseSetting("Authentication:Google:ClientSecret", "test-google-client-secret");
+        builder.UseSetting("Frontend:Url", "http://localhost:8080");
 
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(Emails);
+        });
     }
 
 
@@ -58,10 +69,10 @@ public class ApiFactory : WebApplicationFactory<Program>
         {
             builder.UseEnvironment("Testing");
             builder.UseSetting("ConnectionStrings:Default", $"Data Source={_databasePath}");
-            builder.UseSetting("Jwt:Secret", "dummy-key");
+            builder.UseSetting("Jwt:Secret", "integration-test-jwt-secret-key-32b!");
             builder.UseSetting("Authentication:Google:ClientId", "test-google-client-id");
             builder.UseSetting("Authentication:Google:ClientSecret", "test-google-client-secret");
-
+            builder.UseSetting("Frontend:Url", "http://localhost:8080");
 
             builder.ConfigureServices(services =>
             {
@@ -132,4 +143,32 @@ public class ApiFactory : WebApplicationFactory<Program>
     }
 
     protected sealed record TestAuthSettings(string? Email);
+}
+
+public sealed record SentEmail(
+    string ToEmail,
+    string Subject,
+    string TextBody,
+    string HtmlBody);
+
+public sealed class RecordingEmailSender : IEmailSender
+{
+    private readonly ConcurrentQueue<SentEmail> _messages = new();
+
+    public IReadOnlyCollection<SentEmail> Messages => _messages;
+
+    public Task SendAsync(
+        string toEmail,
+        string subject,
+        string textBody,
+        string htmlBody,
+        CancellationToken cancellationToken = default)
+    {
+        _messages.Enqueue(new SentEmail(toEmail, subject, textBody, htmlBody));
+        return Task.CompletedTask;
+    }
+
+    public SentEmail? LastFor(string toEmail) =>
+        _messages.LastOrDefault(m =>
+            string.Equals(m.ToEmail, toEmail, StringComparison.OrdinalIgnoreCase));
 }

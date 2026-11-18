@@ -9,18 +9,18 @@ namespace OS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/grzybiarze")]
+[Authorize]
 public class GrzybiarzController(
     IGrzybiarzService service) : ControllerBase
 {
-    [HttpGet("{email}")]
-    public async Task<ActionResult<GrzybiarzResponse>> GetByEmail(string email,
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<GrzybiarzPublicResponse>>> List(
         CancellationToken cancellationToken)
     {
-        var item = await service.GetByEmailAsync(email, cancellationToken);
-        return item is null ? NotFound() : Ok(GrzybiarzDtoMapper.ToResponse(item));
+        var items = await service.ListAsync(cancellationToken);
+        return Ok(items.Select(GrzybiarzDtoMapper.ToPublicResponse).ToList());
     }
 
-    [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<GrzybiarzResponse>> GetMe(CancellationToken cancellationToken)
     {
@@ -30,5 +30,14 @@ public class GrzybiarzController(
 
         var item = await service.GetByEmailAsync(email, cancellationToken);
         return item is null ? NotFound() : Ok(GrzybiarzDtoMapper.ToResponse(item));
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<GrzybiarzPublicResponse>> GetById(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var item = await service.GetByIdAsync(id, cancellationToken);
+        return item is null ? NotFound() : Ok(GrzybiarzDtoMapper.ToPublicResponse(item));
     }
 }

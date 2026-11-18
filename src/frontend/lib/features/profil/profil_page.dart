@@ -25,6 +25,19 @@ class ProfilPage extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (user != null) ...[
+                        CircleAvatar(
+                          radius: 36,
+                          backgroundColor: OnlyShroomsTheme.moss,
+                          child: Text(
+                            _initials(user.imie, user.nazwisko),
+                            style: const TextStyle(
+                              color: OnlyShroomsTheme.cream,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         Text(
                           user.displayName,
                           style: Theme.of(context).textTheme.headlineSmall
@@ -43,20 +56,19 @@ class ProfilPage extends ConsumerWidget {
                           ),
                         ],
                         const SizedBox(height: 24),
+                        OutlinedButton.icon(
+                          onPressed: () => context.push('/uzytkownicy'),
+                          icon: Icon(Icons.groups_outlined, color: cream),
+                          label: Text(
+                            'Wszyscy użytkownicy',
+                            style: TextStyle(color: cream),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: cream.withValues(alpha: 0.6)),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                       ],
-                      Text(
-                        'Wkrótce',
-                        style: Theme.of(context).textTheme.titleLarge
-                            ?.copyWith(color: cream),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Profil użytkownika będzie dostępny wkrótce.',
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: cream.withValues(alpha: 0.9)),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
                       FilledButton.icon(
                         onPressed: () async {
                           await ref
@@ -83,5 +95,12 @@ class ProfilPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static String _initials(String imie, String nazwisko) {
+    final a = imie.isNotEmpty ? imie[0] : '';
+    final b = nazwisko.isNotEmpty ? nazwisko[0] : '';
+    final value = '$a$b'.toUpperCase();
+    return value.isEmpty ? '?' : value;
   }
 }
